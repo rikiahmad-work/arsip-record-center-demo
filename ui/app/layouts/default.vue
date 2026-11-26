@@ -102,6 +102,25 @@ onMounted(async () => {
    RESPONSIVE MOBILE ENHANCEMENTS (Desktop 100% Tidak Terpengaruh)
    ============================================================ */
 
+/* Header Profile Avatar & Hover Fix (Mencegah avatar tertutup overlay ::before Mantis) */
+.pc-header .header-user-profile .pc-head-link::before {
+  display: none !important;
+}
+.pc-header .header-user-profile .pc-head-link {
+  position: relative;
+  z-index: 2;
+  transition: background-color 0.15s ease;
+}
+.pc-header .header-user-profile .pc-head-link:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  border-radius: 8px;
+}
+.pc-header .header-user-profile .pc-head-link .user-avtar,
+.pc-header .header-user-profile .pc-head-link span {
+  position: relative;
+  z-index: 3;
+}
+
 /* Mobile Scrollable Tabs */
 @media (max-width: 767.98px) {
   .nav-tabs {

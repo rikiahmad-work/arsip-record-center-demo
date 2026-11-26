@@ -221,3 +221,25 @@ async function logout() {
   router.push('/login')
 }
 </script>
+
+<style scoped>
+/* Pastikan tombol profil dan avatar tidak tertutup oleh pseudo-element ::before bawaan template Mantis */
+:deep(.header-user-profile .pc-head-link) {
+  position: relative;
+  z-index: 2;
+  overflow: visible;
+  transition: background-color 0.15s ease;
+}
+:deep(.header-user-profile .pc-head-link::before) {
+  display: none !important;
+}
+:deep(.header-user-profile .pc-head-link:hover) {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  border-radius: 8px;
+}
+:deep(.header-user-profile .pc-head-link .user-avtar),
+:deep(.header-user-profile .pc-head-link span) {
+  position: relative;
+  z-index: 3;
+}
+</style>

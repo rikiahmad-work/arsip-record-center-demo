@@ -105,5 +105,8 @@ const computedFontSize = computed(() => {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   flex-shrink: 0;
   vertical-align: middle;
+  position: relative;
+  z-index: 3;
+  pointer-events: none;
 }
 </style>
