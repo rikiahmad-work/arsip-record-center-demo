@@ -61,23 +61,8 @@
 
   <div class="card">
     <div class="card-body">
-      <!-- Nav Tabs Sesuai Pola Manajemen User -->
-      <ul class="nav nav-tabs mb-4" role="tablist">
-        <li v-for="tab in outputTabs" :key="tab.key" class="nav-item" role="presentation">
-          <button
-            class="nav-link d-inline-flex align-items-center"
-            :class="{ active: activeOutputTab === tab.key }"
-            type="button"
-            @click="selectOutputTab(tab.key)"
-          >
-            <i :class="tab.icon" class="me-1"></i>
-            <span>{{ tab.label }}</span>
-            <span :class="['badge rounded-pill ms-2', tab.badgeClass]">{{ tab.count }}</span>
-          </button>
-        </li>
-      </ul>
-          <!-- Bar Filter Dedicated (Unit Kerja, Kode Klasifikasi, Kategori, SKKAD, & Status Operasional) -->
-          <div class="p-3 bg-light rounded border mb-3">
+      <!-- Bar Filter Dedicated (Unit Kerja, Kode Klasifikasi, Kategori, SKKAD, & Status Operasional) -->
+      <div class="p-3 bg-light rounded border mb-3">
             <div class="row g-2 align-items-end">
               <div class="col-12 col-md-3">
                 <label class="form-label small text-muted fw-semibold mb-1">
@@ -263,7 +248,6 @@ const kodeList = ref<KodeKlasifikasi[]>([])
 const unitList = ref<UnitKerja[]>([])
 const initialLoading = ref(true)
 const refreshing = ref(false)
-const activeOutputTab = ref<'all' | 'inaktif' | 'vital' | 'usul_musnah' | 'usul_serah' | 'jatuh_tempo'>('all')
 
 const filter = reactive({
   unitKerja: (route.query.unit_kerja as string) || '',
@@ -284,67 +268,9 @@ watch(
   }
 )
 
-const outputTabs = computed(() => [
-  {
-    key: 'all' as const,
-    label: 'Semua Arsip',
-    icon: 'ti ti-files',
-    badgeClass: 'bg-light-primary text-primary',
-    count: allArsipList.value.length,
-  },
-  {
-    key: 'inaktif' as const,
-    label: 'Arsip Inaktif',
-    icon: 'ti ti-archive',
-    badgeClass: 'bg-light-success text-success',
-    count: allArsipList.value.filter((a) => a.kategoriArsip.toUpperCase() === 'INAKTIF').length,
-  },
-  {
-    key: 'vital' as const,
-    label: 'Vital & Terjaga',
-    icon: 'ti ti-shield-lock',
-    badgeClass: 'bg-light-warning text-warning',
-    count: allArsipList.value.filter((a) => ['VITAL', 'TERJAGA'].includes(a.kategoriArsip.toUpperCase())).length,
-  },
-  {
-    key: 'usul_musnah' as const,
-    label: 'Usul Musnah',
-    icon: 'ti ti-trash',
-    badgeClass: 'bg-light-danger text-danger',
-    count: allArsipList.value.filter(
-      (a) =>
-        a.kategoriArsip.toUpperCase() === 'USUL MUSNAH' ||
-        (a.isJatuhTempo && !String(a.nasibAkhir || a.jangkaSimpanNasibAkhir || '').toUpperCase().includes('PERMANEN'))
-    ).length,
-  },
-  {
-    key: 'usul_serah' as const,
-    label: 'Usul Serah',
-    icon: 'ti ti-transfer-in',
-    badgeClass: 'bg-light-info text-info',
-    count: allArsipList.value.filter(
-      (a) =>
-        a.kategoriArsip.toUpperCase() === 'USUL SERAH' ||
-        (a.isJatuhTempo && String(a.nasibAkhir || a.jangkaSimpanNasibAkhir || '').toUpperCase().includes('PERMANEN'))
-    ).length,
-  },
-  {
-    key: 'jatuh_tempo' as const,
-    label: 'Jatuh Tempo (31 Des)',
-    icon: 'ti ti-clock-exclamation',
-    badgeClass: 'bg-danger text-white',
-    count: allArsipList.value.filter((a) => a.isJatuhTempo).length,
-  },
-])
-
-function selectOutputTab(tabKey: typeof activeOutputTab.value) {
-  activeOutputTab.value = tabKey
-}
-
 const hasActiveFilter = computed(() =>
   Boolean(
-    activeOutputTab.value !== 'all' ||
-      filter.unitKerja ||
+    filter.unitKerja ||
       filter.kode ||
       filter.kategori ||
       filter.skkad ||
@@ -385,16 +311,6 @@ const statusOperasionalOptions = [
 // Filter instan di sisi client/DataTables tanpa berkedip atau mereload seluruh halaman
 const filteredArsipList = computed(() => {
   return allArsipList.value.filter((item) => {
-    const katUpper = item.kategoriArsip.toUpperCase()
-    const isPerm = String(item.nasibAkhir || item.jangkaSimpanNasibAkhir || '').toUpperCase().includes('PERMANEN')
-
-    // Filter dari Tab Pengelompokan ANRI
-    if (activeOutputTab.value === 'inaktif' && katUpper !== 'INAKTIF') return false
-    if (activeOutputTab.value === 'vital' && !['VITAL', 'TERJAGA'].includes(katUpper)) return false
-    if (activeOutputTab.value === 'usul_musnah' && !(katUpper === 'USUL MUSNAH' || (item.isJatuhTempo && !isPerm))) return false
-    if (activeOutputTab.value === 'usul_serah' && !(katUpper === 'USUL SERAH' || (item.isJatuhTempo && isPerm))) return false
-    if (activeOutputTab.value === 'jatuh_tempo' && !item.isJatuhTempo) return false
-
     // Filter Dropdown
     if (filter.unitKerja && item.penciptaArsip.toLowerCase() !== filter.unitKerja.toLowerCase()) return false
     if (filter.kode && item.kodeKlasifikasi !== filter.kode) return false
@@ -440,7 +356,6 @@ onMounted(async () => {
 })
 
 function resetFilter() {
-  activeOutputTab.value = 'all'
   filter.unitKerja = ''
   filter.kode = ''
   filter.kategori = ''
@@ -555,15 +470,7 @@ async function handleExport(format: 'xlsx' | 'csv' = 'xlsx') {
     qs.set('format', format)
     if (filter.unitKerja) qs.set('unit_kerja', filter.unitKerja)
     if (filter.kode) qs.set('kode', filter.kode)
-    if (filter.kategori) {
-      qs.set('kategori', filter.kategori)
-    } else if (activeOutputTab.value === 'inaktif') {
-      qs.set('kategori', 'Inaktif')
-    } else if (activeOutputTab.value === 'usul_musnah') {
-      qs.set('kategori', 'Usul Musnah')
-    } else if (activeOutputTab.value === 'usul_serah') {
-      qs.set('kategori', 'Usul Serah')
-    }
+    if (filter.kategori) qs.set('kategori', filter.kategori)
     if (filter.skkad) qs.set('skkad', filter.skkad)
 
     const res = await apiFetch(`/arsip/export?${qs.toString()}`)
