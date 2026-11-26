@@ -4,9 +4,9 @@
 
   <!-- Filter Bar Bulan & Tahun sesuai docs/template-ui/UI-admin/dashboard/index.html -->
   <div class="row mb-4">
-    <div class="col-md-12 d-flex justify-content-end">
-      <div class="d-flex flex-wrap gap-2 shadow-sm p-2 rounded bg-white border align-items-center">
-        <div class="input-group" style="width: 200px;">
+    <div class="col-12 d-flex justify-content-md-end justify-content-start">
+      <div class="d-flex flex-wrap gap-2 shadow-sm p-2 rounded bg-white border align-items-center w-100 w-md-auto">
+        <div class="input-group dashboard-filter-bulan flex-grow-1 flex-md-grow-0" style="min-width: 140px;">
           <span class="input-group-text bg-light text-secondary">
             <i class="ti ti-calendar-event"></i>
           </span>
@@ -16,7 +16,7 @@
           </select>
         </div>
 
-        <div class="input-group" style="width: 160px;">
+        <div class="input-group dashboard-filter-tahun flex-grow-1 flex-md-grow-0" style="min-width: 120px;">
           <span class="input-group-text bg-light text-secondary">
             <i class="ti ti-calendar-time"></i>
           </span>
@@ -28,7 +28,7 @@
           </select>
         </div>
 
-        <button class="btn btn-primary d-flex align-items-center gap-1" type="button" :disabled="loading" @click="loadDashboardData">
+        <button class="btn btn-primary d-flex align-items-center justify-content-center gap-1 flex-grow-1 flex-md-grow-0" type="button" :disabled="loading" @click="loadDashboardData">
           <span v-if="loading" class="spinner-border spinner-border-sm"></span>
           <i v-else class="ti ti-search"></i>
           <span>Cari</span>
@@ -309,5 +309,19 @@ onBeforeUnmount(() => {
   border-left: none;
   border-right: none;
   font-size: 0.875rem;
+}
+@media (min-width: 768px) {
+  .dashboard-filter-bulan {
+    width: 200px !important;
+  }
+  .dashboard-filter-tahun {
+    width: 160px !important;
+  }
+}
+@media (max-width: 767.98px) {
+  .dashboard-filter-bulan,
+  .dashboard-filter-tahun {
+    width: 100% !important;
+  }
 }
 </style>

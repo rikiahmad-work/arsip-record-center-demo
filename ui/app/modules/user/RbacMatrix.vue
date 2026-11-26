@@ -2,7 +2,7 @@
   <div>
     <!-- Toolbar Peran -->
     <div class="d-flex flex-wrap gap-2 align-items-end mb-3">
-      <div style="min-width: 260px">
+      <div class="rbac-role-select flex-grow-1">
         <label class="form-label mb-1">Pilih Peran</label>
         <select v-model="selectedRoleId" class="form-select" @change="syncPermissions">
           <option :value="null" disabled>— Pilih peran —</option>
@@ -24,14 +24,14 @@
         <i class="ti ti-trash me-1"></i>Hapus Peran
       </button>
 
-      <div class="ms-auto d-flex flex-wrap gap-2">
-        <button class="btn btn-light" :disabled="!selectedRole" @click="pilihSemua">
+      <div class="ms-sm-auto w-100 w-sm-auto d-flex flex-wrap gap-2 mt-2 mt-sm-0">
+        <button class="btn btn-light flex-grow-1 flex-sm-grow-0" :disabled="!selectedRole" @click="pilihSemua">
           <i class="ti ti-checks me-1"></i>Pilih Semua
         </button>
-        <button class="btn btn-light" :disabled="!selectedRole" @click="kosongkan">
+        <button class="btn btn-light flex-grow-1 flex-sm-grow-0" :disabled="!selectedRole" @click="kosongkan">
           <i class="ti ti-square me-1"></i>Kosongkan
         </button>
-        <button class="btn btn-primary" :disabled="!selectedRole || saving" @click="simpan">
+        <button class="btn btn-primary flex-grow-1 flex-sm-grow-0" :disabled="!selectedRole || saving" @click="simpan">
           <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
           <i v-else class="ti ti-device-floppy me-1"></i>Simpan Hak Akses
         </button>
@@ -244,3 +244,15 @@ function submitHapusRole() {
   showHapusRole.value = false
 }
 </script>
+
+<style scoped>
+.rbac-role-select {
+  min-width: 240px;
+}
+@media (max-width: 575.98px) {
+  .rbac-role-select {
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+}
+</style>

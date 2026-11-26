@@ -3,7 +3,7 @@
     <div class="navbar-wrapper">
       <!-- Logo sesuai docs/template-ui/UI-admin/dashboard/index.html -->
       <div class="m-header">
-        <NuxtLink :to="logoTarget" class="b-brand text-primary" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
+        <NuxtLink :to="logoTarget" class="b-brand text-primary" style="text-decoration: none; display: flex; align-items: center; gap: 10px;" @click="closeMobileSidebar">
           <img src="/admin/images/logokpppa.png" alt="Logo KemenPPPA" style="width: 40px;">
           <div style="display: flex; flex-direction: column; line-height: 1.15;">
             <span style="font-weight: bold; font-size: 1.2rem; color: #1890ff;">ARSIP</span>
@@ -22,7 +22,7 @@
             </li>
 
             <li v-for="item in items" :key="item.key" class="pc-item" :class="{ active: isActive(item.to) }">
-              <NuxtLink :to="item.to" class="pc-link">
+              <NuxtLink :to="item.to" class="pc-link" @click="closeMobileSidebar">
                 <span class="pc-micon"><i :class="item.icon"></i></span>
                 <span class="pc-mtext">{{ item.label }}</span>
               </NuxtLink>
@@ -61,4 +61,15 @@ const groupedMenu = computed<Record<string, AdminMenuItem[]>>(() => {
 function isActive(path: string): boolean {
   return route.path === path || route.path.startsWith(path + '/')
 }
+
+function closeMobileSidebar() {
+  if (process.client) {
+    document.querySelector('.pc-sidebar')?.classList.remove('mob-sidebar-active')
+    document.querySelector('.pc-menu-overlay')?.remove()
+  }
+}
+
+watch(() => route.path, () => {
+  closeMobileSidebar()
+})
 </script>

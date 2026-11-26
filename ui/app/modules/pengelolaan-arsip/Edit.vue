@@ -102,7 +102,7 @@
         />
       </div>
 
-      <div class="card-footer d-flex gap-2 justify-content-end">
+      <div class="card-footer d-flex flex-wrap gap-2 justify-content-end">
         <button type="button" class="btn btn-outline-secondary" @click="$router.push(`/pengelolaan-arsip/${id}`)">
           Batal
         </button>

@@ -40,7 +40,7 @@
     <div
       v-if="isOpen && !disabled"
       class="kurun-picker-popover shadow-lg border rounded bg-white p-3 position-absolute"
-      style="z-index: 1050; min-width: 320px; max-width: 380px; width: 100%; top: 100%; left: 0; margin-top: 4px;"
+      style="z-index: 1050; top: 100%; left: 0; margin-top: 4px;"
     >
       <!-- Navigasi Tab Mode -->
       <ul class="nav nav-pills nav-fill mb-3 bg-light p-1 rounded small">
@@ -405,6 +405,14 @@ onUnmounted(() => {
 }
 .kurun-picker-popover {
   animation: fadeIn 0.15s ease-in-out;
+  min-width: 280px;
+  max-width: 380px;
+  width: calc(100vw - 2rem);
+}
+@media (min-width: 480px) {
+  .kurun-picker-popover {
+    width: 380px;
+  }
 }
 .btn-xs {
   font-size: 11px;

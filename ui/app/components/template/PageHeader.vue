@@ -25,9 +25,11 @@
 
         <!-- Title + Action slot -->
         <div class="col-md-12">
-          <div class="page-header-title d-flex justify-content-between align-items-center">
+          <div class="page-header-title d-flex flex-wrap justify-content-between align-items-center gap-2">
             <h2 class="mb-0">{{ title }}</h2>
-            <slot name="action" />
+            <div class="page-header-actions d-flex flex-wrap align-items-center gap-2">
+              <slot name="action" />
+            </div>
           </div>
         </div>
       </div>

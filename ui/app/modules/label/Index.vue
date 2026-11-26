@@ -121,15 +121,15 @@
           </div>
         </div>
 
-        <div class="card-footer d-flex justify-content-between align-items-center">
+        <div class="card-footer d-flex flex-wrap gap-2 justify-content-between align-items-center">
           <button type="button" class="btn btn-outline-secondary" @click="resetForm">
             <i class="ti ti-refresh me-1"></i>Reset Parameter
           </button>
-          <div class="d-flex gap-2">
-            <button type="button" class="btn btn-outline-primary" :disabled="printing" @click="handleDownloadPDF">
+          <div class="d-flex flex-wrap gap-2 w-100 w-sm-auto">
+            <button type="button" class="btn btn-outline-primary flex-grow-1 flex-sm-grow-0" :disabled="printing" @click="handleDownloadPDF">
               <i class="ti ti-download me-1"></i>Unduh File PDF
             </button>
-            <button type="button" class="btn btn-primary" :disabled="printing" @click="handleCetakPDF">
+            <button type="button" class="btn btn-primary flex-grow-1 flex-sm-grow-0" :disabled="printing" @click="handleCetakPDF">
               <span v-if="printing" class="spinner-border spinner-border-sm me-1"></span>
               <i v-else class="ti ti-printer me-1"></i>Buka &amp; Cetak PDF
             </button>
@@ -141,7 +141,7 @@
     <!-- Kolom Kanan: Live Preview Visual Label -->
     <div class="col-xl-6">
       <div class="card h-100 mb-0">
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
           <div>
             <h5 class="mb-0"><i class="ti ti-eye me-2"></i>Pratinjau Desain Label (Live Preview)</h5>
             <small class="text-muted">Simulasi tampilan fisik sebelum dicetak ke PDF standar Record Center</small>
@@ -421,5 +421,13 @@ async function handleDownloadPDF() {
 .label-preview-sheet {
   border: 2px solid #262626;
   border-radius: 6px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+@media (max-width: 575.98px) {
+  .label-header {
+    flex-direction: column;
+    text-align: center;
+  }
 }
 </style>

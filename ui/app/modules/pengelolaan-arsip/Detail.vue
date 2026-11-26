@@ -33,11 +33,11 @@
 
   <!-- Satu Card Utama Utuh: 2 Kolom Kiri & Kanan Tanpa Dipisah Per Sub-Judul -->
   <div v-else class="card shadow-sm border">
-    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+    <div class="card-header bg-white py-3 d-flex flex-wrap gap-2 justify-content-between align-items-center">
       <h5 class="mb-0 text-dark">
         <i class="ti ti-file-text me-2 text-primary"></i>Detail Data Berkas Arsip Record Center
       </h5>
-      <div class="d-flex align-items-center gap-2">
+      <div class="d-flex align-items-center gap-2 flex-wrap">
         <span :class="['badge', arsip.status === 'final' ? 'bg-success' : 'bg-warning']">
           {{ arsip.status === 'final' ? 'Final' : 'Draft' }}
         </span>
@@ -55,11 +55,11 @@
           <table class="table table-sm table-borderless align-middle mb-0">
             <tbody>
               <tr>
-                <td class="text-muted" style="width: 175px; vertical-align: top;">No. Item Arsip</td>
+                <td class="text-muted detail-label">No. Item Arsip</td>
                 <td class="fw-bold font-monospace text-dark">{{ arsip.noItemArsip || '-' }}</td>
               </tr>
               <tr>
-                <td class="text-muted" style="vertical-align: top;">Kode Klasifikasi</td>
+                <td class="text-muted detail-label">Kode Klasifikasi</td>
                 <td>
                   <span class="badge bg-light-primary text-primary fw-bold font-monospace px-2 py-1">
                     {{ arsip.kodeKlasifikasi || '-' }}
@@ -67,13 +67,13 @@
                 </td>
               </tr>
               <tr>
-                <td class="text-muted" style="vertical-align: top;">Uraian Informasi</td>
+                <td class="text-muted detail-label">Uraian Informasi</td>
                 <td class="text-dark" style="line-height: 1.5;">
                   {{ arsip.uraianInformasi || arsip.uraianInformasiArsip || '-' }}
                 </td>
               </tr>
               <tr>
-                <td class="text-muted">Jenis Arsip</td>
+                <td class="text-muted detail-label">Jenis Arsip</td>
                 <td>
                   <span class="badge bg-light-secondary text-dark border">
                     {{ arsip.jenisArsip || '-' }}
@@ -81,7 +81,7 @@
                 </td>
               </tr>
               <tr>
-                <td class="text-muted">Tingkat Perkembangan</td>
+                <td class="text-muted detail-label">Tingkat Perkembangan</td>
                 <td>
                   <span class="badge bg-light-success text-success border border-success-subtle">
                     {{ arsip.tingkatPerkembangan || '-' }}
@@ -89,23 +89,23 @@
                 </td>
               </tr>
               <tr>
-                <td class="text-muted">Kurun Waktu</td>
+                <td class="text-muted detail-label">Kurun Waktu</td>
                 <td class="font-monospace text-dark fw-medium">{{ arsip.kurunWaktu || '-' }}</td>
               </tr>
               <tr>
-                <td class="text-muted">Jumlah Berkas</td>
+                <td class="text-muted detail-label">Jumlah Berkas</td>
                 <td class="text-dark fw-medium">{{ arsip.jumlah || '-' }}</td>
               </tr>
               <tr>
-                <td class="text-muted">Kondisi / Keterangan</td>
+                <td class="text-muted detail-label">Kondisi / Keterangan</td>
                 <td class="text-dark">{{ arsip.keterangan || '-' }}</td>
               </tr>
               <tr>
-                <td class="text-muted">Nomor Definitif</td>
+                <td class="text-muted detail-label">Nomor Definitif</td>
                 <td class="font-monospace text-dark fw-medium">{{ arsip.nomorDefinitif || '-' }}</td>
               </tr>
               <tr>
-                <td class="text-muted">Unit Pengolah / Pencipta</td>
+                <td class="text-muted detail-label">Unit Pengolah / Pencipta</td>
                 <td class="text-dark fw-medium">{{ arsip.penciptaArsip || '-' }}</td>
               </tr>
             </tbody>
@@ -117,7 +117,7 @@
           <table class="table table-sm table-borderless align-middle mb-0">
             <tbody>
               <tr>
-                <td class="text-muted" style="width: 175px;">Lokasi Simpan</td>
+                <td class="text-muted detail-label">Lokasi Simpan</td>
                 <td class="text-dark fw-medium">{{ arsip.lokasiSimpan || '-' }}</td>
               </tr>
               <tr>
@@ -377,3 +377,16 @@ function kategoriBadge(kategori?: string): string {
   return 'bg-secondary text-white'
 }
 </script>
+
+<style scoped>
+.detail-label {
+  width: 175px;
+  vertical-align: top;
+}
+@media (max-width: 575.98px) {
+  .detail-label {
+    width: 125px !important;
+    font-size: 0.85rem;
+  }
+}
+</style>
