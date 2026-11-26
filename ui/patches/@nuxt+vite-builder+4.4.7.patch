@@ -1,0 +1,34 @@
+diff --git a/node_modules/@nuxt/vite-builder/dist/index.mjs b/node_modules/@nuxt/vite-builder/dist/index.mjs
+index 0a6baa1..b9838c9 100644
+--- a/node_modules/@nuxt/vite-builder/dist/index.mjs
++++ b/node_modules/@nuxt/vite-builder/dist/index.mjs
+@@ -490,16 +490,20 @@ function listenAndRestrict(server, socketPath) {
+ 	try {
+ 		server.listen(socketPath, () => {
+ 			try {
+-				fs.chmodSync(socketPath, 384);
++				if (fs.existsSync(socketPath)) {
++					fs.chmodSync(socketPath, 384);
++				}
+ 			} catch (error) {
+-				console.error("[nuxt] Failed to restrict vite-node socket permissions; closing.", error);
+-				server.close();
+-				try {
+-					fs.rmSync(dirname(socketPath), {
+-						recursive: true,
+-						force: true
+-					});
+-				} catch {}
++				if (error.code !== 'ENOENT') {
++					console.error("[nuxt] Failed to restrict vite-node socket permissions; closing.", error);
++					server.close();
++					try {
++						fs.rmSync(dirname(socketPath), {
++							recursive: true,
++							force: true
++						});
++					} catch {}
++				}
+ 			}
+ 		});
+ 	} finally {

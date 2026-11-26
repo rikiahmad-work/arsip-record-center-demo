@@ -1,0 +1,43 @@
+# OS & Editor
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Internal Documentation (Excluded from commit)
+docs/
+
+# Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+
+# Node / Nuxt (Frontend)
+ui/node_modules/
+ui/.output/
+ui/.nuxt/
+ui/.nitro/
+ui/dist/
+ui/*.log
+ui/npm-debug.log*
+ui/yarn-debug.log*
+ui/yarn-error.log*
+
+# Go / Backend
+api/bin/
+api/*.exe
+api/*.test
+api/*.out
+api/coverage.*
+
+# Upload Storage (Keep folder via .gitkeep)
+api/storage/dokumen/*
+!api/storage/dokumen/.gitkeep

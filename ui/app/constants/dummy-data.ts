@@ -1,0 +1,77 @@
+import type { AkunRow, LaporanRow } from '~/types/index'
+
+export const DUMMY_LAPORAN_ROWS: LaporanRow[] = [
+  {
+    noTiket: 'GR-20260618-001',
+    tanggalLapor: '18 Juni 2026',
+    jenisPelanggaran: 'Korupsi',
+    identitasTerlapor: 'Budi Santoso',
+    unitKerja: 'Biro Data dan Informasi',
+    statusKey: 'menunggu-verifikasi',
+    statusLabel: 'Menunggu Verifikasi',
+    keterangan: 'Laporan baru masuk, menunggu tindak lanjut admin.',
+  },
+  {
+    noTiket: 'GR-20260515-042',
+    tanggalLapor: '15 Mei 2026',
+    jenisPelanggaran: 'Kolusi',
+    identitasTerlapor: 'Fakih Usman',
+    unitKerja: 'Inspektorat',
+    statusKey: 'dalam-proses',
+    statusLabel: 'Dalam Proses',
+    keterangan: 'Laporan diterima, sedang dalam proses investigasi internal.',
+  },
+  {
+    noTiket: 'GR-20260510-022',
+    tanggalLapor: '10 Mei 2026',
+    jenisPelanggaran: 'Gratifikasi',
+    identitasTerlapor: 'Rina Wati',
+    unitKerja: 'Biro SDM',
+    statusKey: 'selesai',
+    statusLabel: 'Selesai',
+    keterangan: 'Laporan telah selesai ditindaklanjuti.',
+  },
+  {
+    noTiket: 'GR-20260430-018',
+    tanggalLapor: '30 April 2026',
+    jenisPelanggaran: 'Nepotisme',
+    identitasTerlapor: 'Agus Permadi',
+    unitKerja: 'Biro Hukum',
+    statusKey: 'ditolak',
+    statusLabel: 'Ditolak',
+    keterangan: 'Laporan tidak memenuhi syarat verifikasi awal.',
+  },
+]
+
+export const DUMMY_AKUN_ROWS: AkunRow[] = [
+  {
+    nama: 'Rina Amelia',
+    nip: '198705102011012001',
+    jabatan: 'Inspektur Wilayah I',
+    unor: 'Inspektorat',
+    role: 'Super Admin',
+    statusKey: 'aktif',
+    statusLabel: 'Aktif',
+    email: 'rina.amelia@kemenpppa.go.id',
+  },
+  {
+    nama: 'Yusuf Pratama',
+    nip: '199104182015031004',
+    jabatan: 'Analis Pengawasan',
+    unor: 'Inspektorat',
+    role: 'Admin Inspektorat',
+    statusKey: 'aktif',
+    statusLabel: 'Aktif',
+    email: 'yusuf.pratama@kemenpppa.go.id',
+  },
+  {
+    nama: 'Dina Maharani',
+    nip: '198912222014022003',
+    jabatan: 'Auditor Ahli Muda',
+    unor: 'Inspektorat',
+    role: 'Admin Inspektorat',
+    statusKey: 'nonaktif',
+    statusLabel: 'Nonaktif',
+    email: 'dina.maharani@kemenpppa.go.id',
+  },
+]

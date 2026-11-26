@@ -1,0 +1,38 @@
+-- Migration: 002_create_arsip.sql
+-- Tabel utama arsip record center
+
+CREATE TABLE IF NOT EXISTS arsip (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    no_item_arsip VARCHAR(100) NOT NULL,
+    kode_klasifikasi VARCHAR(50) NOT NULL,
+    uraian_informasi_arsip TEXT NOT NULL,
+    jenis_arsip ENUM('KONVENSIONAL', 'ELEKTRONIK') NOT NULL,
+    kurun_waktu VARCHAR(50) NOT NULL,
+    tingkat_perkembangan ENUM('ASLI', 'COPY') NOT NULL,
+    jumlah VARCHAR(100) NOT NULL,
+    keterangan VARCHAR(255) DEFAULT NULL,
+    nomor_definitif VARCHAR(100) DEFAULT NULL,
+    lokasi_simpan VARCHAR(255) NOT NULL,
+    no_boks VARCHAR(50) NOT NULL,
+    no_rak VARCHAR(50) NOT NULL,
+    jangka_simpan_inaktif VARCHAR(100) NOT NULL,
+    jangka_simpan_nasib_akhir ENUM('MUSNAH', 'PERMANEN') DEFAULT NULL,
+    skkad VARCHAR(50) NOT NULL,
+    kategori_arsip VARCHAR(100) NOT NULL,
+    unor_id VARCHAR(36) NOT NULL,
+    pencipta_arsip VARCHAR(255) NOT NULL,
+    petugas_input_id BIGINT UNSIGNED NOT NULL,
+    status ENUM('draft', 'final') NOT NULL DEFAULT 'draft',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME NULL,
+    INDEX idx_arsip_kode_klasifikasi (kode_klasifikasi),
+    INDEX idx_arsip_jenis (jenis_arsip),
+    INDEX idx_arsip_lokasi (lokasi_simpan),
+    INDEX idx_arsip_status (status),
+    INDEX idx_arsip_unor (unor_id),
+    UNIQUE KEY idx_arsip_unor_item (unor_id, no_item_arsip),
+    INDEX idx_arsip_pencipta (pencipta_arsip),
+    INDEX idx_arsip_deleted_at (deleted_at),
+    CONSTRAINT fk_arsip_petugas FOREIGN KEY (petugas_input_id) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
