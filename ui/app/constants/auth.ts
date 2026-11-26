@@ -4,8 +4,18 @@ export const ADMIN_TOKEN_KEY = 'admin_token'
 export const ADMIN_USER_KEY = 'admin_user'
 
 // API Backend URL — dari .env (NUXT_PUBLIC_API_BASE_URL) atau fallback default port 8000
-export const API_BASE_URL =
-  (import.meta.env as Record<string, string>).NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api'
+function normalizeApiUrl(raw?: string): string {
+  let url = (raw || '').trim()
+  if (!url) {
+    url = 'http://localhost:8000/api'
+  }
+  return url.endsWith('/api') ? url : `${url.replace(/\/+$/, '')}/api`
+}
+
+export const API_BASE_URL = normalizeApiUrl(
+  import.meta.env.NUXT_PUBLIC_API_BASE_URL ||
+  (typeof process !== 'undefined' ? process.env?.NUXT_PUBLIC_API_BASE_URL : '')
+)
 
 // Pemetaan role lama ke 4 role kanonik
 export const LEGACY_ROLE_MAP: Record<string, AdminRoleKey> = {
