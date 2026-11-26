@@ -60,9 +60,6 @@ export default defineNuxtConfig({
   vite: {
     build: {
       cssCodeSplit: true,
-      rollupOptions: {
-        external: (id: string) => id.startsWith('/admin/'),
-      },
     },
     assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg', '**/*.ico', '**/*.webp'],
   },
