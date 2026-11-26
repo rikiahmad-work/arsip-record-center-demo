@@ -69,12 +69,19 @@ func SetupRouter(
 		origins = []string{"http://localhost:3000"}
 	}
 
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     origins,
+	corsConfig := cors.Config{
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
-	}))
+	}
+	if allowedOrigins == "*" {
+		corsConfig.AllowOriginFunc = func(origin string) bool {
+			return true
+		}
+	} else {
+		corsConfig.AllowOrigins = origins
+	}
+	r.Use(cors.New(corsConfig))
 
 	if opt.AuditMiddleware != nil {
 		r.Use(opt.AuditMiddleware)
