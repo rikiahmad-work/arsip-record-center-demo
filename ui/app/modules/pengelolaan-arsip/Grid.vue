@@ -10,7 +10,7 @@
           <th class="text-nowrap">NO. ITEM</th>
           <th class="text-center text-nowrap">KODE</th>
           <th style="min-width: 260px;">URAIAN INFORMASI ARSIP</th>
-          <th class="text-center text-nowrap">TAHUN</th>
+          <th class="text-center text-nowrap">KURUN WAKTU</th>
           <th class="text-nowrap">LOKASI (RAK / BOKS / FOLDER)</th>
           <th class="text-nowrap">RETENSI &amp; NASIB AKHIR</th>
           <th class="text-center text-nowrap">KATEGORI &amp; SKKAD</th>
