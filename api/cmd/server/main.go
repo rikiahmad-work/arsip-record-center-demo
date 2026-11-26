@@ -66,6 +66,16 @@ func main() {
 		os.Exit(0)
 	}
 
+	// Auto seed jika diaktifkan via environment variable (berguna saat deploy ke cloud)
+	if os.Getenv("AUTO_SEED") == "true" {
+		fmt.Println("🌱 Menjalankan auto-seeder...")
+		_ = seeders.SeedKodeKlasifikasi(db)
+		_ = seeders.SeedMasterPendukung(db)
+		_ = seeders.SeedDefaultUsers(db)
+		_ = seeders.SeedArsipDefault(db)
+		fmt.Println("✅ Auto-seeder selesai")
+	}
+
 	// Mode: normal (jalankan server)
 	userRepo := repository.NewUserRepository(db)
 	masterRepo := repository.NewMasterRepository(db)

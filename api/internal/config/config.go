@@ -70,14 +70,14 @@ func Load() (*Config, error) {
 	_ = godotenv.Load()
 
 	cfg := &Config{
-		AppPort:       getEnv("APP_PORT", "8000"),
+		AppPort:       getEnv("PORT", getEnv("APP_PORT", "8000")),
 		EnableSwagger: getEnvBool("ENABLE_SWAGGER", true),
 		Database: DatabaseConfig{
-			Host:     getEnv("DB_HOST", "127.0.0.1"),
-			Port:     getEnv("DB_PORT", "3306"),
-			Name:     getEnv("DB_DATABASE", "siarsip"),
-			Username: getEnv("DB_USERNAME", "root"),
-			Password: getEnv("DB_PASSWORD", ""),
+			Host:     getEnv("DB_HOST", getEnv("MYSQLHOST", "127.0.0.1")),
+			Port:     getEnv("DB_PORT", getEnv("MYSQLPORT", "3306")),
+			Name:     getEnv("DB_DATABASE", getEnv("MYSQLDATABASE", "siarsip")),
+			Username: getEnv("DB_USERNAME", getEnv("MYSQLUSER", "root")),
+			Password: getEnv("DB_PASSWORD", getEnv("MYSQLPASSWORD", "")),
 		},
 		JWT: JWTConfig{
 			Secret:             getEnv("JWT_SECRET", ""),
