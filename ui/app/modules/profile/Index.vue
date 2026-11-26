@@ -17,6 +17,19 @@
           </div>
 
           <div class="card-body">
+            <!-- Header Ringkasan Profil dengan Avatar Inisial Google -->
+            <div class="d-flex align-items-center gap-3 p-3 bg-light rounded border mb-4">
+              <UiAppAvatar :name="profile.name" :size="52" />
+              <div>
+                <h5 class="mb-0 text-dark fw-bold">{{ profile.name || '-' }}</h5>
+                <div class="text-muted small mt-1 d-flex flex-wrap align-items-center gap-2">
+                  <span><i class="ti ti-mail me-1"></i>{{ profile.email || '-' }}</span>
+                  <span>&bull;</span>
+                  <span><i class="ti ti-id-badge me-1"></i>NIP: {{ profile.nip || '-' }}</span>
+                </div>
+              </div>
+            </div>
+
             <div class="alert alert-light border small text-muted d-flex align-items-center gap-2 mb-4">
               <i class="ti ti-info-circle text-primary fs-5 flex-shrink-0"></i>
               <div>

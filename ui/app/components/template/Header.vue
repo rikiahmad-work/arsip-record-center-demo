@@ -86,7 +86,7 @@
           <!-- Profil User -->
           <li class="dropdown pc-h-item header-user-profile">
             <a
-              class="pc-head-link dropdown-toggle arrow-none me-0"
+              class="pc-head-link dropdown-toggle arrow-none me-0 d-inline-flex align-items-center"
               data-bs-toggle="dropdown"
               href="#"
               role="button"
@@ -94,14 +94,14 @@
               data-bs-auto-close="outside"
               aria-expanded="false"
             >
-              <img src="/admin/images/user/avatar-2.jpg" alt="user-image" class="user-avtar">
+              <UiAppAvatar :name="userName" :size="28" custom-class="user-avtar" />
               <span>{{ userName }}</span>
             </a>
             <div class="dropdown-menu dropdown-user-profile dropdown-menu-end pc-h-dropdown">
               <div class="dropdown-header">
-                <div class="d-flex mb-1">
+                <div class="d-flex mb-1 align-items-center">
                   <div class="flex-shrink-0">
-                    <img src="/admin/images/user/avatar-2.jpg" alt="user-image" class="user-avtar wid-35">
+                    <UiAppAvatar :name="userName" :size="38" custom-class="user-avtar" />
                   </div>
                   <div class="flex-grow-1 ms-3">
                     <h6 class="mb-1">{{ userName }}</h6>

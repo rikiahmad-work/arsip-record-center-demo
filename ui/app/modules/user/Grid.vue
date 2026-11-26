@@ -21,7 +21,12 @@
       </thead>
       <tbody>
         <tr v-for="row in rows" :key="row.id">
-          <td class="fw-semibold text-dark">{{ row.nama }}</td>
+          <td class="fw-semibold text-dark">
+            <div class="d-flex align-items-center gap-2">
+              <UiAppAvatar :name="row.nama" :size="28" />
+              <span>{{ row.nama }}</span>
+            </div>
+          </td>
           <td class="text-nowrap font-monospace text-primary small">{{ row.username || '-' }}</td>
           <td class="text-nowrap font-monospace small">{{ row.nip }}</td>
           <td>{{ row.jabatan || '-' }}</td>
