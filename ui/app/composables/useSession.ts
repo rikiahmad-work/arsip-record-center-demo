@@ -169,7 +169,7 @@ export function useSession() {
       const trimmed = identifier.trim()
       const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nip: trimmed,
           username: trimmed,
@@ -297,7 +297,6 @@ export function useSession() {
     const token = getToken()
     const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
     const headers: Record<string, string> = {
-      'ngrok-skip-browser-warning': 'true',
       ...(options.headers as Record<string, string>),
       Authorization: `Bearer ${token}`,
     }
