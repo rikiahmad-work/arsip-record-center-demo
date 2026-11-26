@@ -4,7 +4,9 @@ export const ADMIN_TOKEN_KEY = 'admin_token'
 export const ADMIN_USER_KEY = 'admin_user'
 
 // API Backend URL — dari .env (NUXT_PUBLIC_API_BASE_URL) atau fallback default port 8000
-function normalizeApiUrl(raw?: string): string {
+declare const __NUXT_PUBLIC_API_BASE_URL__: string | undefined
+
+export function normalizeApiUrl(raw?: string): string {
   let url = (raw || '').trim()
   if (!url) {
     url = 'http://localhost:8000/api'
@@ -12,10 +14,23 @@ function normalizeApiUrl(raw?: string): string {
   return url.endsWith('/api') ? url : `${url.replace(/\/+$/, '')}/api`
 }
 
-export const API_BASE_URL = normalizeApiUrl(
-  import.meta.env.NUXT_PUBLIC_API_BASE_URL ||
-  (typeof process !== 'undefined' ? process.env?.NUXT_PUBLIC_API_BASE_URL : '')
-)
+function resolveRawApiUrl(): string {
+  if (typeof __NUXT_PUBLIC_API_BASE_URL__ !== 'undefined' && __NUXT_PUBLIC_API_BASE_URL__) {
+    return __NUXT_PUBLIC_API_BASE_URL__
+  }
+  if (import.meta.env?.NUXT_PUBLIC_API_BASE_URL) {
+    return import.meta.env.NUXT_PUBLIC_API_BASE_URL as string
+  }
+  if (typeof window !== 'undefined' && (window as any).__NUXT__?.config?.public?.apiBase) {
+    return (window as any).__NUXT__.config.public.apiBase as string
+  }
+  if (typeof process !== 'undefined' && process.env?.NUXT_PUBLIC_API_BASE_URL) {
+    return process.env.NUXT_PUBLIC_API_BASE_URL
+  }
+  return ''
+}
+
+export const API_BASE_URL = normalizeApiUrl(resolveRawApiUrl())
 
 // Pemetaan role lama ke 4 role kanonik
 export const LEGACY_ROLE_MAP: Record<string, AdminRoleKey> = {

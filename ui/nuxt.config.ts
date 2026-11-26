@@ -58,6 +58,10 @@ export default defineNuxtConfig({
   },
 
   vite: {
+    envPrefix: ['VITE_', 'NUXT_PUBLIC_'],
+    define: {
+      __NUXT_PUBLIC_API_BASE_URL__: JSON.stringify(process.env.NUXT_PUBLIC_API_BASE_URL || ''),
+    },
     build: {
       cssCodeSplit: true,
     },

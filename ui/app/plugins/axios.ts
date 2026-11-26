@@ -1,14 +1,16 @@
 import axios from 'axios'
-import { ADMIN_TOKEN_KEY, ADMIN_USER_KEY, API_BASE_URL } from '~/constants/auth'
+import { ADMIN_TOKEN_KEY, ADMIN_USER_KEY, API_BASE_URL, normalizeApiUrl } from '~/constants/auth'
 
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
-  const baseURL = ((config.public as Record<string, any>)?.apiBase as string) || API_BASE_URL
+  const rawBase = ((config.public as Record<string, any>)?.apiBase as string) || API_BASE_URL
+  const baseURL = normalizeApiUrl(rawBase)
 
   const api = axios.create({
     baseURL,
     headers: {
       'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true',
     },
   })
 
