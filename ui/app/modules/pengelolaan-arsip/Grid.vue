@@ -7,7 +7,7 @@
       <thead class="table-light">
         <tr>
           <th class="text-center" style="width: 45px;">NO</th>
-          <th class="text-nowrap">NO. ITEM</th>
+          <th class="text-center text-nowrap">NO. ITEM</th>
           <th class="text-center text-nowrap">KODE</th>
           <th style="min-width: 260px;">URAIAN INFORMASI ARSIP</th>
           <th class="text-center text-nowrap">KURUN WAKTU</th>
@@ -27,9 +27,9 @@
           <td class="text-center">{{ index + 1 }}</td>
 
           <!-- 2. No. Item & Definitif -->
-          <td class="text-nowrap">
+          <td class="text-center text-nowrap">
             <div class="fw-semibold text-dark">{{ item.noItemArsip }}</div>
-            <small v-if="item.nomorDefinitif" class="text-muted">Def: {{ item.nomorDefinitif }}</small>
+            <small v-if="item.nomorDefinitif" class="text-muted d-block">Def: {{ item.nomorDefinitif }}</small>
           </td>
 
           <!-- 3. Kode Klasifikasi -->
