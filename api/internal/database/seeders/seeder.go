@@ -61,7 +61,7 @@ func SeedDefaultUsers(db *gorm.DB) error {
 
 	for _, u := range defaultUsers {
 		var existing model.User
-		result := db.Unscoped().Where("nip = ?", u.NIP).First(&existing)
+		result := db.Unscoped().Where("nip = ? OR username = ? OR email = ?", u.NIP, u.Username, u.Email).First(&existing)
 		if result.Error == nil {
 			// Pastikan role dan status aktif ter-update ke role kanonik
 			unitKerja := u.Unit

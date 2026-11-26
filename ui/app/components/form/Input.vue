@@ -7,11 +7,13 @@
     <input
       :id="inputId"
       :type="type"
-      :class="['form-control', error ? 'is-invalid' : '']"
+      :class="['form-control', error ? 'is-invalid' : '', disabled ? 'bg-light text-muted' : '']"
+      :style="disabled ? 'cursor: not-allowed;' : (readonly ? 'cursor: default;' : '')"
       :placeholder="placeholder"
       :value="modelValue"
       :disabled="disabled"
       :readonly="readonly"
+      :tabindex="disabled ? -1 : undefined"
       @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     />
     <div v-if="error" class="invalid-feedback">{{ error }}</div>

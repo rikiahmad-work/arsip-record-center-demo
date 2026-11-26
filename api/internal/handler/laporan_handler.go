@@ -72,6 +72,22 @@ func (h *LaporanHandler) LaporanExport(c *gin.Context) {
 	var req dto.LaporanFilterRequest
 	_ = c.ShouldBindQuery(&req)
 
+	format := c.Query("format")
+	if format == "xlsx" || format == "excel" {
+		xlsxBytes, err := h.laporanSvc.ExportLaporanDAIExcel(c.Request.Context(), req)
+		if err != nil {
+			helper.ErrorResponse(c, http.StatusInternalServerError, "Gagal mengekspor laporan DAI ke Excel")
+			return
+		}
+		filename := fmt.Sprintf("DAFTAR-ARSIP-INAKTIF-DAI-%s.xlsx", time.Now().Format("20060102-150405"))
+		c.Header("Content-Description", "File Transfer")
+		c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+		c.Header("Content-Length", strconv.Itoa(len(xlsxBytes)))
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", xlsxBytes)
+		return
+	}
+
 	csvBytes, err := h.laporanSvc.ExportLaporanDAICSV(c.Request.Context(), req)
 	if err != nil {
 		helper.ErrorResponse(c, http.StatusInternalServerError, "Gagal mengekspor laporan DAI")
@@ -80,7 +96,8 @@ func (h *LaporanHandler) LaporanExport(c *gin.Context) {
 
 	filename := fmt.Sprintf("rekap-dai-18-kolom-%s.csv", time.Now().Format("20060102-150405"))
 	c.Header("Content-Description", "File Transfer")
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+	c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+	c.Header("Content-Length", strconv.Itoa(len(csvBytes)))
 	c.Header("X-Content-Type-Options", "nosniff")
 	c.Data(http.StatusOK, "text/csv; charset=utf-8", csvBytes)
 }

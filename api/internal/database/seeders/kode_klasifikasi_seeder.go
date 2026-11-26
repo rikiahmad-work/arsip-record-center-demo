@@ -407,6 +407,7 @@ var masterKodeKlasifikasi = []kodeKlasifikasiSeed{
 	{Kode: "DT.09.01", Nama: "Sub-Sub Masalah Data dan Informasi (DT.09.01)", JangkaSimpanInaktif: "3 Tahun", NasibAkhir: "Musnah", SKKAD: "Biasa"},
 	{Kode: "DT.09.02", Nama: "Sub-Sub Masalah Data dan Informasi (DT.09.02)", JangkaSimpanInaktif: "3 Tahun", NasibAkhir: "Musnah", SKKAD: "Biasa"},
 	{Kode: "DT.09.03", Nama: "Sub-Sub Masalah Data dan Informasi (DT.09.03)", JangkaSimpanInaktif: "3 Tahun", NasibAkhir: "Musnah", SKKAD: "Biasa"},
+	{Kode: "DT.10", Nama: "Pengumpulan dan Pengolahan Data (DT.10)", JangkaSimpanInaktif: "3 Tahun", NasibAkhir: "Musnah", SKKAD: "Biasa"},
 	{Kode: "KG", Nama: "Pokok Masalah Kesetaraan Gender (KG)", JangkaSimpanInaktif: "", NasibAkhir: "", SKKAD: "Biasa"},
 	{Kode: "KG.01", Nama: "Sub Masalah Kesetaraan Gender (KG.01)", JangkaSimpanInaktif: "", NasibAkhir: "", SKKAD: "Biasa"},
 	{Kode: "KG.01.01", Nama: "Sub-Sub Masalah Kesetaraan Gender (KG.01.01)", JangkaSimpanInaktif: "3 Tahun", NasibAkhir: "Musnah", SKKAD: "Biasa"},

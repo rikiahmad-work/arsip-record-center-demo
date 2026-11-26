@@ -33,6 +33,13 @@ type ArsipResponse struct {
 	PetugasInputID         uint      `json:"petugas_input_id"`
 	PetugasInput           string    `json:"petugas_input,omitempty"`
 	Status                 string    `json:"status"`
+	TanggalJatuhTempo      string    `json:"tanggal_jatuh_tempo"`
+	IsJatuhTempo           bool      `json:"is_jatuh_tempo"`
+	RekomendasiRetensi     string    `json:"rekomendasi_retensi"`
+	SedangDipinjam         bool      `json:"sedang_dipinjam"`
+	StatusPinjam           string    `json:"status_pinjam,omitempty"`
+	DalamPenyusutan        bool      `json:"dalam_penyusutan"`
+	StatusPenyusutan       string    `json:"status_penyusutan,omitempty"`
 	CreatedAt              time.Time `json:"created_at"`
 	UpdatedAt              time.Time `json:"updated_at"`
 }

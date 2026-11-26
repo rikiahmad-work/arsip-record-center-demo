@@ -157,6 +157,31 @@
                 </td>
               </tr>
               <tr>
+                <td class="text-muted">Batas Retensi (31 Des)</td>
+                <td>
+                  <span class="text-dark fw-medium me-2">{{ arsip.tanggalJatuhTempo || '-' }}</span>
+                  <span
+                    v-if="arsip.isJatuhTempo"
+                    class="badge bg-light-danger text-danger border border-danger px-2 py-1"
+                  >
+                    <i class="ti ti-alert-triangle me-1"></i>{{ arsip.rekomendasiRetensi || 'Jatuh Tempo' }}
+                  </span>
+                </td>
+              </tr>
+              <tr v-if="arsip.sedangDipinjam || arsip.dalamPenyusutan">
+                <td class="text-muted">Status Operasional</td>
+                <td>
+                  <div class="d-flex flex-wrap gap-1">
+                    <span v-if="arsip.sedangDipinjam" class="badge bg-warning text-dark px-2 py-1">
+                      <i class="ti ti-book-upload me-1"></i>Sedang Dipinjam ({{ arsip.statusPinjam }})
+                    </span>
+                    <span v-if="arsip.dalamPenyusutan" class="badge bg-dark text-white px-2 py-1">
+                      <i class="ti ti-recycle me-1"></i>{{ arsip.statusPenyusutan || 'Proses Penyusutan' }}
+                    </span>
+                  </div>
+                </td>
+              </tr>
+              <tr>
                 <td class="text-muted">Klasifikasi Keamanan (SKKAD)</td>
                 <td>
                   <span class="badge px-2 py-1" :class="skkadBadge(arsip.skkad)">

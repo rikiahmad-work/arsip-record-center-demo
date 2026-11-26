@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -183,7 +184,30 @@ func (r *fakeArsipRepo) CountTotal(ctx context.Context) (int64, error) {
 	return int64(len(r.items)), nil
 }
 func (r *fakeArsipRepo) CountByUnor(ctx context.Context, unorID string) (int64, error) {
-	return int64(len(r.items)), nil
+	var c int64
+	for _, a := range r.items {
+		if a.UnorID == unorID {
+			c++
+		}
+	}
+	return c, nil
+}
+func (r *fakeArsipRepo) NextNoItemByUnor(ctx context.Context, unorID string, unitKerjaID *uint, penciptaArsip string) (string, error) {
+	maxNum := 0
+	count := 0
+	for _, a := range r.items {
+		if a.UnorID == unorID || (penciptaArsip != "" && strings.EqualFold(a.PenciptaArsip, penciptaArsip)) {
+			count++
+			if n, err := strconv.Atoi(a.NoItemArsip); err == nil && n > maxNum {
+				maxNum = n
+			}
+		}
+	}
+	next := maxNum + 1
+	if count+1 > next {
+		next = count + 1
+	}
+	return strconv.Itoa(next), nil
 }
 
 // ─── Tests for Phase 1 Acceptance Criteria ──────────────────────

@@ -136,17 +136,27 @@
                   />
                 </div>
 
-                <!-- Tombol Aksi: Export & Reset Filter Berdampingan -->
+                <!-- Tombol Aksi: Export Excel (.xlsx) & CSV & Reset Filter Berdampingan -->
                 <div class="col-12 col-md-2 d-flex gap-1">
                   <button
                     type="button"
                     class="btn btn-sm btn-success flex-grow-1 d-inline-flex align-items-center justify-content-center gap-1 text-nowrap"
                     :disabled="exporting"
-                    @click="exportDAICSV"
+                    title="Unduh file Excel (.xlsx) Format Baku 18 Kolom DAI"
+                    @click="exportDAI('xlsx')"
                   >
                     <span v-if="exporting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                    <i v-else class="ti ti-download"></i>
-                    <span>{{ exporting ? 'Mengunduh...' : 'Unduh Laporan' }}</span>
+                    <i v-else class="ti ti-file-spreadsheet"></i>
+                    <span>{{ exporting ? 'Mengunduh...' : 'Excel (.xlsx)' }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center"
+                    :disabled="exporting"
+                    title="Unduh format CSV"
+                    @click="exportDAI('csv')"
+                  >
+                    <i class="ti ti-download"></i>
                   </button>
                   <button
                     v-if="hasActiveFilter"
@@ -401,26 +411,49 @@ function cetakHalaman() {
   window.print()
 }
 
-async function exportDAICSV() {
+async function exportDAI(format: 'xlsx' | 'csv' = 'xlsx') {
   exporting.value = true
   try {
     const qs = new URLSearchParams()
+    qs.set('format', format)
     if (filter.kode) qs.set('kode', filter.kode)
     if (filter.unitKerja) qs.set('unit_kerja', filter.unitKerja)
     if (filter.kategori) qs.set('kategori', filter.kategori)
     if (filter.skkad) qs.set('skkad', filter.skkad)
 
-    const res = await apiFetch(`/laporan/export${qs.toString() ? `?${qs.toString()}` : ''}`)
+    const res = await apiFetch(`/laporan/export?${qs.toString()}`)
+    if (!res.ok) {
+      let errMsg = 'Gagal mengekspor laporan'
+      try {
+        const errJson = await res.json()
+        if (errJson.message) errMsg = errJson.message
+      } catch (_) {}
+      showToast(errMsg, 'danger')
+      return
+    }
+
     const blob = await res.blob()
-    const url = URL.createObjectURL(blob)
+    const mimeType = format === 'xlsx'
+      ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      : 'text/csv;charset=utf-8;'
+    const fileBlob = new Blob([blob], { type: mimeType })
+    const url = URL.createObjectURL(fileBlob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `rekap-laporan-arsip-18-kolom-${new Date().toISOString().slice(0, 10)}.csv`
+    const ext = format === 'xlsx' ? 'xlsx' : 'csv'
+    link.download = `DAFTAR-ARSIP-INAKTIF-DAI-${new Date().toISOString().slice(0, 10)}.${ext}`
+    document.body.appendChild(link)
     link.click()
+    document.body.removeChild(link)
     URL.revokeObjectURL(url)
-    showToast('Laporan 18 kolom berhasil diekspor ke CSV', 'success')
-  } catch {
-    showToast('Gagal mengekspor laporan', 'danger')
+    showToast(
+      format === 'xlsx'
+        ? 'Laporan 18 kolom DAI berhasil diekspor ke Excel (.xlsx)'
+        : 'Laporan 18 kolom DAI berhasil diekspor ke CSV',
+      'success'
+    )
+  } catch (err: any) {
+    showToast(err?.message || 'Gagal mengekspor laporan', 'danger')
   } finally {
     exporting.value = false
   }

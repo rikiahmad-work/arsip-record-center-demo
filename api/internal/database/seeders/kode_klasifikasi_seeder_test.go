@@ -7,14 +7,18 @@ import (
 )
 
 func TestMasterKodeKlasifikasi_Phase0Criteria(t *testing.T) {
-	if len(masterKodeKlasifikasi) != 435 {
-		t.Fatalf("expected 435 kode klasifikasi, got %d", len(masterKodeKlasifikasi))
+	if len(masterKodeKlasifikasi) < 435 {
+		t.Fatalf("expected at least 435 kode klasifikasi, got %d", len(masterKodeKlasifikasi))
 	}
 
-	seen := make(map[string]bool, 435)
+	seen := make(map[string]bool, len(masterKodeKlasifikasi))
+	hasDT10 := false
 	for i, item := range masterKodeKlasifikasi {
 		if item.Kode == "" {
 			t.Fatalf("row %d has empty kode", i)
+		}
+		if item.Kode == "DT.10" {
+			hasDT10 = true
 		}
 		if seen[item.Kode] {
 			t.Fatalf("duplicate kode found: %s", item.Kode)
@@ -28,6 +32,9 @@ func TestMasterKodeKlasifikasi_Phase0Criteria(t *testing.T) {
 		if item.NasibAkhir != "" && !model.NasibAkhir(item.NasibAkhir).IsValid() {
 			t.Fatalf("kode %s has invalid NasibAkhir: %s", item.Kode, item.NasibAkhir)
 		}
+	}
+	if !hasDT10 {
+		t.Fatalf("expected masterKodeKlasifikasi to contain DT.10")
 	}
 }
 

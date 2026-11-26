@@ -13,9 +13,7 @@
           :model-value="form.jangkaSimpanInaktif"
           label="Jangka Simpan Inaktif (Auto dari JRA)"
           placeholder="Otomatis dari Kode Klasifikasi"
-          readonly
-          required
-          @update:model-value="emit('update:jangkaSimpanInaktif', $event)"
+          disabled
         />
       </div>
       <div class="col-md-6">
@@ -23,9 +21,7 @@
           :model-value="form.jangkaSimpanNasibAkhir"
           label="Nasib Akhir (Auto dari JRA)"
           placeholder="Otomatis dari Kode Klasifikasi"
-          readonly
-          required
-          @update:model-value="emit('update:jangkaSimpanNasibAkhir', $event)"
+          disabled
         />
       </div>
       <div class="col-md-6">

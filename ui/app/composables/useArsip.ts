@@ -35,9 +35,40 @@ let cachedUnitKerja: UnitKerja[] | null = null
 
 // ─── Mapping Helpers (snake_case Backend → camelCase Frontend) ──
 
+function hitungRetensiClientFallback(kurunWaktu: string, jangkaSimpanInaktif: string, nasibAkhir: string | null, kategoriArsip: string) {
+  const years = (kurunWaktu || '').match(/\b(19\d{2}|20\d{2})\b/g)
+  const nowYear = new Date().getFullYear()
+  let tahunAkhir = nowYear
+  if (years && years.length > 0) {
+    tahunAkhir = Math.max(...years.map((y) => parseInt(y, 10)))
+  }
+  const durMatch = (jangkaSimpanInaktif || '').match(/\d+/)
+  const durasi = durMatch ? parseInt(durMatch[0], 10) : 3
+  const tahunJatuhTempo = tahunAkhir + (durasi > 0 ? durasi : 3)
+  const tanggalJatuhTempo = `31 Desember ${tahunJatuhTempo}`
+  const katUpper = (kategoriArsip || '').toUpperCase()
+  const isJatuhTempo = nowYear > tahunJatuhTempo || katUpper === 'USUL MUSNAH' || katUpper === 'USUL SERAH'
+  let rekomendasiRetensi = `Inaktif s/d 31 Des ${tahunJatuhTempo}`
+  if (katUpper === 'USUL MUSNAH') {
+    rekomendasiRetensi = 'Proses Usul Musnah'
+  } else if (katUpper === 'USUL SERAH') {
+    rekomendasiRetensi = 'Proses Usul Serah'
+  } else if (isJatuhTempo) {
+    rekomendasiRetensi = String(nasibAkhir || '').toUpperCase().includes('PERMANEN')
+      ? 'Siap Usul Serah'
+      : 'Siap Usul Musnah'
+  }
+  return { tanggalJatuhTempo, isJatuhTempo, rekomendasiRetensi }
+}
+
 function mapArsip(a: any): Arsip {
   const uraian = a.uraian_informasi || a.uraian_informasi_arsip || ''
   const nasib = a.nasib_akhir ?? a.jangka_simpan_nasib_akhir ?? null
+  const kurun = a.kurun_waktu || ''
+  const jangka = a.jangka_simpan_inaktif || ''
+  const kategori = a.kategori_arsip || 'Inaktif'
+  const fallback = hitungRetensiClientFallback(kurun, jangka, nasib, kategori)
+
   return {
     id: String(a.id),
     noItemArsip: a.no_item_arsip || '',
@@ -46,7 +77,7 @@ function mapArsip(a: any): Arsip {
     uraianInformasi: uraian,
     uraianInformasiArsip: uraian,
     jenisArsip: a.jenis_arsip || 'Konvensional',
-    kurunWaktu: a.kurun_waktu || '',
+    kurunWaktu: kurun,
     tingkatPerkembangan: a.tingkat_perkembangan || 'Asli',
     jumlah: a.jumlah || '',
     keterangan: a.keterangan || '',
@@ -55,17 +86,24 @@ function mapArsip(a: any): Arsip {
     lokasiSimpan: a.lokasi_simpan_nama || a.lokasi_simpan || 'Record Center',
     noBoks: a.no_boks || '',
     noRak: a.no_rak || '',
-    jangkaSimpanInaktif: a.jangka_simpan_inaktif || '',
+    jangkaSimpanInaktif: jangka,
     nasibAkhir: nasib,
     jangkaSimpanNasibAkhir: nasib,
     skkad: a.skkad || 'Biasa',
-    kategoriArsip: a.kategori_arsip || 'Inaktif',
+    kategoriArsip: kategori,
     unitKerjaId: a.unit_kerja_id ?? null,
     unorId: a.unor_id || '',
     penciptaArsip: a.unit_kerja_nama || a.pencipta_arsip || '',
     petugasInputId: a.petugas_input_id,
     petugasInput: a.petugas_input || '',
     status: a.status || 'final',
+    tanggalJatuhTempo: a.tanggal_jatuh_tempo || fallback.tanggalJatuhTempo,
+    isJatuhTempo: typeof a.is_jatuh_tempo === 'boolean' ? a.is_jatuh_tempo : fallback.isJatuhTempo,
+    rekomendasiRetensi: a.rekomendasi_retensi || fallback.rekomendasiRetensi,
+    sedangDipinjam: Boolean(a.sedang_dipinjam),
+    statusPinjam: a.status_pinjam || '',
+    dalamPenyusutan: Boolean(a.dalam_penyusutan) || ['USUL MUSNAH', 'USUL SERAH'].includes(kategori.toUpperCase()),
+    statusPenyusutan: a.status_penyusutan || (['USUL MUSNAH', 'USUL SERAH'].includes(kategori.toUpperCase()) ? kategori : ''),
     createdAt: a.created_at || '',
     updatedAt: a.updated_at || '',
   }
@@ -413,6 +451,7 @@ export function useArsip() {
     const json = await res.json()
     if (!json.success) throw new Error(json.message || 'Gagal menambahkan arsip')
     cachedKodeKlasifikasi = null
+    cachedUnitKerja = null
     return mapArsip(json.data)
   }
 
@@ -423,6 +462,8 @@ export function useArsip() {
     })
     const json = await res.json()
     if (!json.success) throw new Error(json.message || 'Gagal mengupdate arsip')
+    cachedKodeKlasifikasi = null
+    cachedUnitKerja = null
     return mapArsip(json.data)
   }
 
@@ -430,6 +471,7 @@ export function useArsip() {
     const res = await apiFetch(`/arsip/${id}`, { method: 'DELETE' })
     const json = await res.json()
     cachedKodeKlasifikasi = null
+    cachedUnitKerja = null
     return Boolean(json.success)
   }
 
@@ -437,6 +479,8 @@ export function useArsip() {
     const res = await apiFetch(`/arsip/${id}/restore`, { method: 'PUT' })
     const json = await res.json()
     if (!json.success) return null
+    cachedKodeKlasifikasi = null
+    cachedUnitKerja = null
     return mapArsip(json.data)
   }
 
@@ -450,7 +494,36 @@ export function useArsip() {
     const json = await res.json()
     if (!json.success) throw new Error(json.message || 'Gagal mengimpor file arsip')
     cachedKodeKlasifikasi = null
+    cachedUnitKerja = null
     return json.data
+  }
+
+  async function getNextNoItemArsip(unitKerjaId?: string | number, penciptaArsip?: string): Promise<string> {
+    try {
+      const res = await getArsipList({
+        unit_kerja_id: unitKerjaId ? Number(unitKerjaId) : undefined,
+        unit_kerja: !unitKerjaId && penciptaArsip ? penciptaArsip : undefined,
+        per_page: 500,
+      })
+      const items = res.data || []
+      const usedSet = new Set<string>()
+      let maxNum = 0
+      for (const item of items) {
+        const trimmed = String(item.noItemArsip || '').trim()
+        usedSet.add(trimmed)
+        if (/^\d+$/.test(trimmed)) {
+          const n = parseInt(trimmed, 10)
+          if (n > maxNum) maxNum = n
+        }
+      }
+      let nextNum = Math.max(maxNum + 1, items.length + 1)
+      while (usedSet.has(String(nextNum))) {
+        nextNum++
+      }
+      return String(nextNum)
+    } catch {
+      return '1'
+    }
   }
 
   async function listDokumenArsip(arsipId: string | number): Promise<DokumenArsipItem[]> {
@@ -669,6 +742,7 @@ export function useArsip() {
     deleteArsip,
     restoreArsip,
     importArsipCSV,
+    getNextNoItemArsip,
     listDokumenArsip,
     uploadDokumenArsip,
     deleteDokumenArsip,

@@ -61,6 +61,8 @@ type Arsip struct {
 	LokasiSimpanRef *LokasiSimpan  `gorm:"foreignKey:LokasiSimpanID" json:"lokasi_simpan_ref,omitempty"`
 	UnitKerjaRef    *UnitKerja     `gorm:"foreignKey:UnitKerjaID" json:"unit_kerja_ref,omitempty"`
 	DokumenList     []DokumenArsip `gorm:"foreignKey:ArsipID" json:"dokumen_list,omitempty"`
+	PeminjamanList  []Peminjaman   `gorm:"foreignKey:ArsipID" json:"peminjaman_list,omitempty"`
+	PenyusutanList  []Penyusutan   `gorm:"foreignKey:ArsipID" json:"penyusutan_list,omitempty"`
 }
 
 // TableName override default table name ke "arsip".

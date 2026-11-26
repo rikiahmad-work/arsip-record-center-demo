@@ -1,23 +1,23 @@
 <template>
   <div class="row g-3">
-        <div class="col-md-6">
-          <FormInput
-            :model-value="form.kurunWaktu"
-            label="Kurun Waktu"
-            placeholder="Contoh: 2024-2026"
-            required
-            @update:model-value="emit('update:kurunWaktu', $event)"
-          />
-        </div>
-        <div class="col-md-6">
-          <FormInput
-            :model-value="form.jumlah"
-            label="Jumlah"
-            placeholder="Contoh: 1 Berkas / 1 File PDF"
-            required
-            @update:model-value="emit('update:jumlah', $event)"
-          />
-        </div>
+    <div class="col-md-6">
+      <FormKurunWaktuPicker
+        :model-value="form.kurunWaktu"
+        label="Kurun Waktu"
+        placeholder="Contoh: 2021 - 2022, 2026, atau 28 Juli 2021"
+        required
+        @update:model-value="emit('update:kurunWaktu', $event)"
+      />
+    </div>
+    <div class="col-md-6">
+      <FormInput
+        :model-value="form.jumlah"
+        label="Jumlah"
+        placeholder="Contoh: 1 Berkas / 1 File PDF"
+        required
+        @update:model-value="emit('update:jumlah', $event)"
+      />
+    </div>
         <div class="col-md-6">
           <FormInput
             :model-value="form.keterangan"

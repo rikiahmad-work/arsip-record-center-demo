@@ -14,8 +14,7 @@
       <FormInput
         :model-value="form.noRak"
         label="No. Rak"
-        placeholder="Contoh: R-01"
-        required
+        placeholder="Kosongkan jika belum ada (Contoh: R-01)"
         @update:model-value="emit('update:noRak', $event)"
       />
     </div>
@@ -23,8 +22,7 @@
       <FormInput
         :model-value="form.noBoks"
         label="No. Boks"
-        placeholder="Contoh: B-001"
-        required
+        placeholder="Kosongkan jika belum ada (Contoh: B-001)"
         @update:model-value="emit('update:noBoks', $event)"
       />
     </div>
@@ -32,8 +30,7 @@
       <FormInput
         :model-value="form.noFolder"
         label="No. Folder"
-        placeholder="Contoh: F-01"
-        required
+        placeholder="Kosongkan jika belum ada (Contoh: F-01)"
         @update:model-value="emit('update:noFolder', $event)"
       />
     </div>

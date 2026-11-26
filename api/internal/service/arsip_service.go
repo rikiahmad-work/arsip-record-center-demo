@@ -1,9 +1,7 @@
 package service
 
 import (
-	"bytes"
 	"context"
-	"encoding/csv"
 	"errors"
 	"fmt"
 	"io"
@@ -39,6 +37,7 @@ type ArsipService interface {
 	GetStats(ctx context.Context) (*dto.ArsipStatsResponse, error)
 	GetDaftarUNOR() map[string]string
 	ExportCSV(ctx context.Context, req dto.ArsipListRequest) ([]byte, error)
+	ExportExcel(ctx context.Context, req dto.ArsipListRequest) ([]byte, error)
 	ImportCSV(ctx context.Context, reader io.Reader, petugasInputID uint, callerRole string) (*dto.ArsipImportResultResponse, error)
 }
 
@@ -198,6 +197,9 @@ func (s *arsipServiceImpl) resolveUnitKerjaAndLokasi(ctx context.Context, unitKe
 
 	resolvedLokasiID = lokasiID
 	resolvedLokasiNama = strings.TrimSpace(lokasiNama)
+	if strings.EqualFold(resolvedLokasiNama, "RECORDS CENTER") {
+		resolvedLokasiNama = "Record Center"
+	}
 	if s.masterRepo != nil && lokasiID != nil && *lokasiID > 0 {
 		lok, errLok := s.masterRepo.FindLokasiSimpanByID(ctx, *lokasiID)
 		if errLok != nil {
@@ -273,18 +275,22 @@ func (s *arsipServiceImpl) Create(ctx context.Context, req dto.StoreArsipRequest
 		return nil, err
 	}
 
-	// Auto-generate no_item_arsip jika tidak diisi (format: ARS/YYYY/KODE/NNN)
+	// Auto-generate no_item_arsip berupa nomor urut biasa mulai dari 1 sesuai Unit Kerja
 	noItem := strings.TrimSpace(req.NoItemArsip)
 	if noItem == "" {
-		count, err := s.arsipRepo.CountTotal(ctx)
+		nextNo, err := s.arsipRepo.NextNoItemByUnor(ctx, unorID, unitID, pencipta)
 		if err != nil {
 			return nil, err
 		}
-		noItem = fmt.Sprintf("ARS/%d/%s/%03d", time.Now().Year(), req.KodeKlasifikasi, count+1)
+		noItem = nextNo
 	} else {
 		existing, _ := s.arsipRepo.FindByNoItem(ctx, noItem)
-		if existing != nil && existing.UnorID == unorID {
-			return nil, helper.NewAppError(409, "No item arsip sudah terdaftar", nil)
+		if existing != nil && (existing.UnorID == unorID || strings.EqualFold(existing.PenciptaArsip, pencipta)) {
+			nextNo, err := s.arsipRepo.NextNoItemByUnor(ctx, unorID, unitID, pencipta)
+			if err != nil {
+				return nil, err
+			}
+			noItem = nextNo
 		}
 	}
 
@@ -331,8 +337,30 @@ func (s *arsipServiceImpl) Create(ctx context.Context, req dto.StoreArsipRequest
 		Status:                 status,
 	}
 
-	if err := s.arsipRepo.Create(ctx, arsip); err != nil {
-		return nil, err
+	var saveErr error
+	for attempt := 0; attempt < 3; attempt++ {
+		if attempt > 0 {
+			nextNo, err := s.arsipRepo.NextNoItemByUnor(ctx, unorID, unitID, pencipta)
+			if err != nil {
+				return nil, err
+			}
+			arsip.NoItemArsip = nextNo
+		}
+
+		saveErr = s.arsipRepo.Create(ctx, arsip)
+		if saveErr == nil {
+			break
+		}
+
+		errStr := strings.ToLower(saveErr.Error())
+		if strings.Contains(errStr, "duplicate") || strings.Contains(errStr, "1062") || strings.Contains(errStr, "idx_arsip_unor_item") {
+			continue
+		}
+		return nil, saveErr
+	}
+
+	if saveErr != nil {
+		return nil, saveErr
 	}
 
 	created, err := s.arsipRepo.FindByID(ctx, arsip.ID)
@@ -395,7 +423,16 @@ func (s *arsipServiceImpl) Update(ctx context.Context, id uint, req dto.UpdateAr
 		legacyNasib = &upper
 	}
 
-	if req.NoItemArsip != "" {
+	// Jika Unit Kerja berubah saat Edit, sesuaikan nomor urut item arsip pada Unit Kerja tujuan
+	unitChanged := (unorID != "" && unorID != arsip.UnorID) ||
+		(pencipta != "" && !strings.EqualFold(pencipta, arsip.PenciptaArsip))
+	if unitChanged {
+		nextNo, err := s.arsipRepo.NextNoItemByUnor(ctx, unorID, unitID, pencipta)
+		if err != nil {
+			return nil, err
+		}
+		arsip.NoItemArsip = nextNo
+	} else if req.NoItemArsip != "" {
 		arsip.NoItemArsip = req.NoItemArsip
 	}
 	if req.NoFolder != nil {
@@ -507,8 +544,25 @@ func (s *arsipServiceImpl) GetStats(ctx context.Context) (*dto.ArsipStatsRespons
 	}, nil
 }
 
-// ExportCSV mengekspor daftar arsip sesuai filter menjadi format CSV 19 kolom DAI (+ No. Folder).
+// ExportCSV mengekspor daftar arsip sesuai filter menjadi format CSV 18 kolom baku DAI.
 func (s *arsipServiceImpl) ExportCSV(ctx context.Context, req dto.ArsipListRequest) ([]byte, error) {
+	rows, err := s.buildExportDAIRows(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return helper.GenerateDAICSV(rows)
+}
+
+// ExportExcel mengekspor daftar arsip sesuai filter menjadi file Excel (.xlsx) 18 kolom baku DAI dengan header 2 tingkat.
+func (s *arsipServiceImpl) ExportExcel(ctx context.Context, req dto.ArsipListRequest) ([]byte, error) {
+	rows, err := s.buildExportDAIRows(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return helper.GenerateDAIExcel(rows, req.Tahun)
+}
+
+func (s *arsipServiceImpl) buildExportDAIRows(ctx context.Context, req dto.ArsipListRequest) ([]helper.DAIRowData, error) {
 	req.Page = 1
 	req.PerPage = 500
 	items, _, err := s.arsipRepo.FindAll(ctx, req)
@@ -516,19 +570,7 @@ func (s *arsipServiceImpl) ExportCSV(ctx context.Context, req dto.ArsipListReque
 		return nil, err
 	}
 
-	var buf bytes.Buffer
-	writer := csv.NewWriter(&buf)
-
-	headers := []string{
-		"NO", "NO_ITEM_ARSIP", "NO_FOLDER", "KODE_KLASIFIKASI", "URAIAN_INFORMASI_ARSIP",
-		"JENIS_ARSIP", "KURUN_WAKTU", "TINGKAT_PERKEMBANGAN", "JUMLAH", "KETERANGAN",
-		"NOMOR_DEFINITIF", "LOKASI_SIMPAN", "NO_BOKS", "NO_RAK",
-		"JANGKA_SIMPAN_INAKTIF", "NASIB_AKHIR", "SKKAD", "KATEGORI_ARSIP", "PENCIPTA_ARSIP",
-	}
-	if err := writer.Write(headers); err != nil {
-		return nil, err
-	}
-
+	rows := make([]helper.DAIRowData, 0, len(items))
 	for i, a := range items {
 		noFolder := ""
 		if a.NoFolder != nil {
@@ -545,113 +587,202 @@ func (s *arsipServiceImpl) ExportCSV(ctx context.Context, req dto.ArsipListReque
 			nasib = *a.JangkaSimpanNasibAkhir
 		}
 
-		row := []string{
-			fmt.Sprintf("%d", i+1),
-			a.NoItemArsip,
-			noFolder,
-			a.KodeKlasifikasi,
-			a.UraianInformasiArsip,
-			a.JenisArsip,
-			a.KurunWaktu,
-			a.TingkatPerkembangan,
-			a.Jumlah,
-			a.Keterangan,
-			noDef,
-			a.LokasiSimpan,
-			a.NoBoks,
-			a.NoRak,
-			a.JangkaSimpanInaktif,
-			nasib,
-			a.SKKAD,
-			a.KategoriArsip,
-			a.PenciptaArsip,
-		}
-		if err := writer.Write(row); err != nil {
-			return nil, err
-		}
+		rows = append(rows, helper.DAIRowData{
+			No:                  i + 1,
+			NoItemArsip:         a.NoItemArsip,
+			KodeKlasifikasi:     a.KodeKlasifikasi,
+			UraianInformasi:     a.UraianInformasiArsip,
+			JenisArsip:          a.JenisArsip,
+			KurunWaktu:          helper.NormalizeKurunWaktuExcel(a.KurunWaktu),
+			TingkatPerkembangan: a.TingkatPerkembangan,
+			Jumlah:              a.Jumlah,
+			Keterangan:          a.Keterangan,
+			NomorDefinitif:      noDef,
+			LokasiSimpan:        a.LokasiSimpan,
+			NoBoks:              a.NoBoks,
+			NoRak:               a.NoRak,
+			NoFolder:            noFolder,
+			JangkaSimpanInaktif: a.JangkaSimpanInaktif,
+			NasibAkhir:          nasib,
+			SKKAD:               a.SKKAD,
+			KategoriArsip:       a.KategoriArsip,
+			PenciptaArsip:       a.PenciptaArsip,
+		})
 	}
-
-	writer.Flush()
-	return buf.Bytes(), writer.Error()
+	return rows, nil
 }
 
-// ImportCSV mengimpor data arsip dari file CSV dengan auto-fill JRA & SKKAD dari master kode_klasifikasi.
+// ImportCSV mengimpor data arsip dari file Excel (.xlsx) maupun CSV (.csv)
+// dengan deteksi cerdas format 18 kolom DAI asli maupun 19 kolom (+ No. Folder),
+// konversi serial tanggal Excel, dan auto-fill JRA & SKKAD dari master kode_klasifikasi.
 func (s *arsipServiceImpl) ImportCSV(ctx context.Context, reader io.Reader, petugasInputID uint, callerRole string) (*dto.ArsipImportResultResponse, error) {
-	csvReader := csv.NewReader(reader)
-	csvReader.FieldsPerRecord = -1
-
-	records, err := csvReader.ReadAll()
+	fileBytes, err := io.ReadAll(reader)
 	if err != nil {
-		return nil, helper.NewAppError(422, "Format file CSV tidak valid", nil)
+		return nil, helper.NewAppError(422, "Gagal membaca file import", nil)
+	}
+
+	records, err := helper.ParseDAIImportFile(fileBytes)
+	if err != nil {
+		return nil, err
 	}
 	if len(records) < 2 {
 		return nil, helper.NewAppError(422, "File import kosong atau hanya berisi header", nil)
 	}
 
-	result := &dto.ArsipImportResultResponse{
-		TotalRows: len(records) - 1,
+	// Deteksi apakah file menggunakan format 19 kolom (ada NO_FOLDER di kolom ke-3)
+	// atau format 18 kolom DAI asli (kolom ke-3 langsung KODE KLASIFIKASI).
+	hasFolderCol := false
+	dataStartIdx := 1
+	for rIdx, row := range records {
+		if rIdx > 10 {
+			break
+		}
+		joined := strings.ToUpper(strings.Join(row, " "))
+		if strings.Contains(joined, "KODE") && strings.Contains(joined, "URAIAN") {
+			dataStartIdx = rIdx + 1
+			for cIdx, colName := range row {
+				cn := strings.ToUpper(strings.TrimSpace(colName))
+				if cIdx == 2 && strings.Contains(cn, "FOLDER") {
+					hasFolderCol = true
+				}
+			}
+		} else if rIdx >= dataStartIdx && (strings.Contains(joined, "NASIB AKHIR") || (strings.TrimSpace(safeCol(row, 2)) == "" && strings.TrimSpace(safeCol(row, 3)) == "")) {
+			// Lewati baris sub-header tingkat 2 (misal baris "INAKTIF | NASIB AKHIR") atau baris kosong
+			dataStartIdx = rIdx + 1
+		}
 	}
 
-	for idx, row := range records[1:] {
-		lineNum := idx + 2
-		if len(row) < 5 {
+	dataRows := records[dataStartIdx:]
+	result := &dto.ArsipImportResultResponse{
+		TotalRows: 0,
+	}
+
+	for idx, row := range dataRows {
+		lineNum := dataStartIdx + idx + 1
+
+		getCol := func(i int) string {
+			return safeCol(row, i)
+		}
+
+		// Lewati baris yang benar-benar kosong
+		if strings.TrimSpace(strings.Join(row, "")) == "" {
+			continue
+		}
+
+		var (
+			noItem      string
+			noFolder    string
+			kode        string
+			uraian      string
+			jenis       string
+			kurun       string
+			tingkat     string
+			jumlah      string
+			keterangan  string
+			noDef       string
+			lokasi      string
+			noBoks      string
+			noRak       string
+			skkad       string
+			kategori    string
+			pencipta    string
+		)
+
+		if hasFolderCol {
+			// Format 19 kolom (dengan NO_FOLDER di index 2)
+			noItem = getCol(1)
+			noFolder = getCol(2)
+			kode = getCol(3)
+			uraian = getCol(4)
+			jenis = getCol(5)
+			kurun = getCol(6)
+			tingkat = getCol(7)
+			jumlah = getCol(8)
+			keterangan = getCol(9)
+			noDef = getCol(10)
+			lokasi = getCol(11)
+			noBoks = getCol(12)
+			noRak = getCol(13)
+			skkad = getCol(16)
+			kategori = getCol(17)
+			pencipta = getCol(18)
+		} else {
+			// Format 18 kolom DAI asli (tanpa NO_FOLDER: index 2 = KODE KLASIFIKASI)
+			noItem = getCol(1)
+			kode = getCol(2)
+			uraian = getCol(3)
+			jenis = getCol(4)
+			kurun = getCol(5)
+			tingkat = getCol(6)
+			jumlah = getCol(7)
+			keterangan = getCol(8)
+			noDef = getCol(9)
+			lokasi = getCol(10)
+			noBoks = getCol(11)
+			noRak = getCol(12)
+			skkad = getCol(15)
+			kategori = getCol(16)
+			pencipta = getCol(17)
+		}
+
+		// Lewati baris sub-judul/grup yang tidak punya kode klasifikasi maupun uraian
+		if kode == "" && uraian == "" {
+			continue
+		}
+
+		result.TotalRows++
+		if len(row) < 4 {
 			result.FailedRows++
 			result.Errors = append(result.Errors, fmt.Sprintf("Baris %d: jumlah kolom kurang dari minimal", lineNum))
 			continue
 		}
 
-		getCol := func(i int) string {
-			if i < len(row) {
-				return strings.TrimSpace(row[i])
-			}
-			return ""
-		}
-
-		noFolder := getCol(2)
 		var noFolderPtr *string
 		if noFolder != "" {
 			noFolderPtr = &noFolder
 		}
-		noDef := getCol(10)
 		var noDefPtr *string
 		if noDef != "" {
 			noDefPtr = &noDef
 		}
 
-		jenis := getCol(5)
 		if jenis == "" {
 			jenis = string(model.JenisArsipKonvensional)
 		}
-		kurun := getCol(6)
+		kurun = helper.NormalizeKurunWaktuExcel(kurun)
 		if kurun == "" {
 			kurun = fmt.Sprintf("%d", time.Now().Year())
 		}
-		tingkat := getCol(7)
 		if tingkat == "" {
 			tingkat = string(model.TingkatPerkembanganAsli)
 		}
-		jumlah := getCol(8)
 		if jumlah == "" {
-			jumlah = "1 Berkas"
+			jumlah = "1 Lembar"
+		}
+		if keterangan == "" {
+			keterangan = "KONDISI BAIK"
+		}
+		if strings.EqualFold(lokasi, "RECORDS CENTER") || lokasi == "" {
+			lokasi = "Record Center"
 		}
 
 		storeReq := dto.StoreArsipRequest{
-			NoItemArsip:         getCol(1),
+			NoItemArsip:         noItem,
 			NoFolder:            noFolderPtr,
-			KodeKlasifikasi:     getCol(3),
-			UraianInformasi:     getCol(4),
+			KodeKlasifikasi:     kode,
+			UraianInformasi:     uraian,
 			JenisArsip:          jenis,
 			KurunWaktu:          kurun,
 			TingkatPerkembangan: tingkat,
 			Jumlah:              jumlah,
-			Keterangan:          getCol(9),
+			Keterangan:          keterangan,
 			NomorDefinitif:      noDefPtr,
-			LokasiSimpan:        getCol(11),
-			NoBoks:              getCol(12),
-			NoRak:               getCol(13),
-			SKKAD:               getCol(16),
-			KategoriArsip:       getCol(17),
-			PenciptaArsip:       getCol(18),
+			LokasiSimpan:        lokasi,
+			NoBoks:              noBoks,
+			NoRak:               noRak,
+			SKKAD:               skkad,
+			KategoriArsip:       kategori,
+			PenciptaArsip:       pencipta,
 			Status:              string(model.StatusArsipFinal),
 		}
 
@@ -664,6 +795,13 @@ func (s *arsipServiceImpl) ImportCSV(ctx context.Context, reader io.Reader, petu
 	}
 
 	return result, nil
+}
+
+func safeCol(row []string, i int) string {
+	if i >= 0 && i < len(row) {
+		return strings.TrimSpace(row[i])
+	}
+	return ""
 }
 
 func (s *arsipServiceImpl) toResponse(arsip model.Arsip) dto.ArsipResponse {
@@ -694,6 +832,46 @@ func (s *arsipServiceImpl) toResponse(arsip model.Arsip) dto.ArsipResponse {
 		}
 	}
 
+	nasibStr := "Musnah"
+	if nasib != nil && *nasib != "" {
+		nasibStr = *nasib
+	}
+
+	normKurun := helper.NormalizeKurunWaktuExcel(arsip.KurunWaktu)
+	_, _, tglJatuhTempo, isJatuhTempo, rekomendasi := helper.HitungRetensiANRI(
+		normKurun, arsip.JangkaSimpanInaktif, nasibStr, arsip.KategoriArsip, time.Now(),
+	)
+
+	sedangDipinjam := false
+	statusPinjam := ""
+	for _, p := range arsip.PeminjamanList {
+		st := strings.ToUpper(strings.TrimSpace(p.Status))
+		if st == "DIPINJAM" || st == "TERLAMBAT" {
+			sedangDipinjam = true
+			statusPinjam = p.Status
+			if !p.TanggalKembaliRencana.IsZero() && time.Now().After(p.TanggalKembaliRencana) {
+				statusPinjam = "Terlambat"
+			}
+			break
+		}
+	}
+
+	dalamPenyusutan := false
+	statusPenyusutan := ""
+	katUpper := strings.ToUpper(strings.TrimSpace(arsip.KategoriArsip))
+	if katUpper == "USUL MUSNAH" || katUpper == "USUL SERAH" {
+		dalamPenyusutan = true
+		statusPenyusutan = arsip.KategoriArsip
+	}
+	for _, py := range arsip.PenyusutanList {
+		st := strings.ToUpper(strings.TrimSpace(py.Status))
+		if st != "DITOLAK" {
+			dalamPenyusutan = true
+			statusPenyusutan = fmt.Sprintf("Usul %s (%s)", py.JenisUsul, py.Status)
+			break
+		}
+	}
+
 	return dto.ArsipResponse{
 		ID:                     arsip.ID,
 		NoItemArsip:            arsip.NoItemArsip,
@@ -702,7 +880,7 @@ func (s *arsipServiceImpl) toResponse(arsip model.Arsip) dto.ArsipResponse {
 		UraianInformasi:        arsip.UraianInformasiArsip,
 		UraianInformasiArsip:   arsip.UraianInformasiArsip,
 		JenisArsip:             arsip.JenisArsip,
-		KurunWaktu:             arsip.KurunWaktu,
+		KurunWaktu:             normKurun,
 		TingkatPerkembangan:    arsip.TingkatPerkembangan,
 		Jumlah:                 arsip.Jumlah,
 		Keterangan:             arsip.Keterangan,
@@ -724,6 +902,13 @@ func (s *arsipServiceImpl) toResponse(arsip model.Arsip) dto.ArsipResponse {
 		PetugasInputID:         arsip.PetugasInputID,
 		PetugasInput:           petugasNama,
 		Status:                 arsip.Status,
+		TanggalJatuhTempo:      tglJatuhTempo,
+		IsJatuhTempo:           isJatuhTempo,
+		RekomendasiRetensi:     rekomendasi,
+		SedangDipinjam:         sedangDipinjam,
+		StatusPinjam:           statusPinjam,
+		DalamPenyusutan:        dalamPenyusutan,
+		StatusPenyusutan:       statusPenyusutan,
 		CreatedAt:              arsip.CreatedAt,
 		UpdatedAt:              arsip.UpdatedAt,
 	}

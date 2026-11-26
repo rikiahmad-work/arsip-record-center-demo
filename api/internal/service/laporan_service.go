@@ -1,10 +1,7 @@
 package service
 
 import (
-	"bytes"
 	"context"
-	"encoding/csv"
-	"fmt"
 	"strings"
 	"time"
 
@@ -21,6 +18,7 @@ type LaporanService interface {
 	GetLaporanRekap(ctx context.Context, req dto.LaporanFilterRequest) (*dto.LaporanRekapResponse, error)
 	GetLaporanDAI(ctx context.Context, req dto.LaporanFilterRequest) ([]dto.DAIRowResponse, error)
 	ExportLaporanDAICSV(ctx context.Context, req dto.LaporanFilterRequest) ([]byte, error)
+	ExportLaporanDAIExcel(ctx context.Context, req dto.LaporanFilterRequest) ([]byte, error)
 	GenerateLabel(ctx context.Context, jenis string, req dto.LabelQueryRequest) ([]byte, error)
 }
 
@@ -51,7 +49,31 @@ func (s *laporanServiceImpl) GetDashboardStats(ctx context.Context) (*dto.Dashbo
 	var penyusutanPending int64
 	s.db.WithContext(ctx).Model(&model.Penyusutan{}).Where("status = 'Diajukan'").Count(&penyusutanPending)
 
-	jatuhTempo := usul + penyusutanPending
+	// Hitung arsip yang jatuh tempo retensi per 31 Desember sesuai standar ANRI
+	var allArsip []model.Arsip
+	s.db.WithContext(ctx).Model(&model.Arsip{}).
+		Select("id, kurun_waktu, jangka_simpan_inaktif, nasib_akhir, jangka_simpan_nasib_akhir, kategori_arsip").
+		Find(&allArsip)
+
+	now := time.Now()
+	var jatuhTempoANRI int64
+	for _, a := range allArsip {
+		nasib := "Musnah"
+		if a.NasibAkhir != nil && *a.NasibAkhir != "" {
+			nasib = *a.NasibAkhir
+		} else if a.JangkaSimpanNasibAkhir != nil && *a.JangkaSimpanNasibAkhir != "" {
+			nasib = *a.JangkaSimpanNasibAkhir
+		}
+		_, _, _, isDue, _ := helper.HitungRetensiANRI(a.KurunWaktu, a.JangkaSimpanInaktif, nasib, a.KategoriArsip, now)
+		if isDue {
+			jatuhTempoANRI++
+		}
+	}
+
+	jatuhTempo := jatuhTempoANRI
+	if usul+penyusutanPending > jatuhTempo {
+		jatuhTempo = usul + penyusutanPending
+	}
 
 	return &dto.DashboardStatsResponse{
 		TotalArsip:        total,
@@ -194,7 +216,7 @@ func FormatDAIRows(list []model.Arsip) []dto.DAIRowResponse {
 			KodeKlasifikasi:     a.KodeKlasifikasi,
 			UraianInformasi:     a.UraianInformasiArsip,
 			JenisArsip:          a.JenisArsip,
-			KurunWaktu:          a.KurunWaktu,
+			KurunWaktu:          helper.NormalizeKurunWaktuExcel(a.KurunWaktu),
 			TingkatPerkembangan: a.TingkatPerkembangan,
 			Jumlah:              a.Jumlah,
 			Keterangan:          a.Keterangan,
@@ -217,63 +239,42 @@ func (s *laporanServiceImpl) ExportLaporanDAICSV(ctx context.Context, req dto.La
 	if err != nil {
 		return nil, err
 	}
+	return helper.GenerateDAICSV(toHelperDAIRows(rows))
+}
 
-	var buf bytes.Buffer
-	writer := csv.NewWriter(&buf)
-
-	// 18 Kolom sesuai Format Daftar Arsip Inaktif (DAI)
-	headers := []string{
-		"NO.",
-		"NO. ITEM ARSIP",
-		"KODE KLASIFIKASI",
-		"URAIAN INFORMASI ARSIP",
-		"JENIS ARSIP",
-		"KURUN WAKTU",
-		"TINGKAT PERKEMBANGAN",
-		"JUMLAH",
-		"KETERANGAN",
-		"NOMOR DEFINITIF",
-		"LOKASI SIMPAN",
-		"NO. BOKS",
-		"NO. RAK",
-		"JANGKA SIMPAN INAKTIF",
-		"NASIB AKHIR",
-		"SKKAD",
-		"KATEGORI ARSIP",
-		"PENCIPTA ARSIP",
-	}
-	if err := writer.Write(headers); err != nil {
+func (s *laporanServiceImpl) ExportLaporanDAIExcel(ctx context.Context, req dto.LaporanFilterRequest) ([]byte, error) {
+	rows, err := s.GetLaporanDAI(ctx, req)
+	if err != nil {
 		return nil, err
 	}
+	return helper.GenerateDAIExcel(toHelperDAIRows(rows), req.Tahun)
+}
 
+func toHelperDAIRows(rows []dto.DAIRowResponse) []helper.DAIRowData {
+	res := make([]helper.DAIRowData, 0, len(rows))
 	for _, r := range rows {
-		record := []string{
-			fmt.Sprintf("%d", r.No),
-			r.NoItemArsip,
-			r.KodeKlasifikasi,
-			r.UraianInformasi,
-			r.JenisArsip,
-			r.KurunWaktu,
-			r.TingkatPerkembangan,
-			r.Jumlah,
-			r.Keterangan,
-			r.NomorDefinitif,
-			r.LokasiSimpan,
-			r.NoBoks,
-			r.NoRak,
-			r.JangkaSimpanInaktif,
-			r.NasibAkhir,
-			r.SKKAD,
-			r.KategoriArsip,
-			r.PenciptaArsip,
-		}
-		if err := writer.Write(record); err != nil {
-			return nil, err
-		}
+		res = append(res, helper.DAIRowData{
+			No:                  r.No,
+			NoItemArsip:         r.NoItemArsip,
+			KodeKlasifikasi:     r.KodeKlasifikasi,
+			UraianInformasi:     r.UraianInformasi,
+			JenisArsip:          r.JenisArsip,
+			KurunWaktu:          helper.NormalizeKurunWaktuExcel(r.KurunWaktu),
+			TingkatPerkembangan: r.TingkatPerkembangan,
+			Jumlah:              r.Jumlah,
+			Keterangan:          r.Keterangan,
+			NomorDefinitif:      r.NomorDefinitif,
+			LokasiSimpan:        r.LokasiSimpan,
+			NoBoks:              r.NoBoks,
+			NoRak:               r.NoRak,
+			JangkaSimpanInaktif: r.JangkaSimpanInaktif,
+			NasibAkhir:          r.NasibAkhir,
+			SKKAD:               r.SKKAD,
+			KategoriArsip:       r.KategoriArsip,
+			PenciptaArsip:       r.PenciptaArsip,
+		})
 	}
-
-	writer.Flush()
-	return buf.Bytes(), writer.Error()
+	return res
 }
 
 func (s *laporanServiceImpl) GenerateLabel(ctx context.Context, jenis string, req dto.LabelQueryRequest) ([]byte, error) {

@@ -190,11 +190,27 @@ func (h *ArsipHandler) DaftarUNOR(c *gin.Context) {
 	helper.SuccessResponse(c, "", daftar)
 }
 
-// Export menangani GET /api/arsip/export (CSV / Excel compatible)
+// Export menangani GET /api/arsip/export (mendukung format=xlsx untuk Excel 18 kolom DAI asli maupun format=csv)
 func (h *ArsipHandler) Export(c *gin.Context) {
 	var req dto.ArsipListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		helper.ValidationErrorResponse(c, map[string]string{"validation": err.Error()})
+		return
+	}
+
+	format := c.Query("format")
+	if format == "xlsx" || format == "excel" {
+		data, err := h.arsipService.ExportExcel(c.Request.Context(), req)
+		if err != nil {
+			helper.ErrorResponse(c, http.StatusInternalServerError, "Gagal mengekspor data arsip ke Excel")
+			return
+		}
+		filename := fmt.Sprintf("DAFTAR-ARSIP-INAKTIF-%s.xlsx", time.Now().Format("20060102-150405"))
+		c.Header("Content-Description", "File Transfer")
+		c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+		c.Header("Content-Length", strconv.Itoa(len(data)))
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", data)
 		return
 	}
 
@@ -206,7 +222,8 @@ func (h *ArsipHandler) Export(c *gin.Context) {
 
 	filename := fmt.Sprintf("daftar-arsip-inaktif-%s.csv", time.Now().Format("20060102-150405"))
 	c.Header("Content-Description", "File Transfer")
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+	c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+	c.Header("Content-Length", strconv.Itoa(len(data)))
 	c.Header("X-Content-Type-Options", "nosniff")
 	c.Data(http.StatusOK, "text/csv; charset=utf-8", data)
 }

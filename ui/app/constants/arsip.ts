@@ -158,7 +158,7 @@ export const DUMMY_CHART_DATA: ChartDataPoint[] = [
 export const DUMMY_ARSIP: Arsip[] = [
   {
     id: 'ARS-001',
-    noItemArsip: 'ARS/2026/DT.10/001',
+    noItemArsip: '1',
     kodeKlasifikasi: 'DT.10',
     uraianInformasiArsip: 'Keputusan Menteri tentang Pedoman Pengelolaan Arsip',
     jenisArsip: 'KONVENSIONAL',
@@ -182,7 +182,7 @@ export const DUMMY_ARSIP: Arsip[] = [
   },
   {
     id: 'ARS-002',
-    noItemArsip: 'ARS/2026/KP.02/002',
+    noItemArsip: '1',
     kodeKlasifikasi: 'KP.02',
     uraianInformasiArsip: 'Nota Dinas tentang Rapat Koordinasi Bulanan',
     jenisArsip: 'KONVENSIONAL',
@@ -206,7 +206,7 @@ export const DUMMY_ARSIP: Arsip[] = [
   },
   {
     id: 'ARS-003',
-    noItemArsip: 'ARS/2026/HK.05/003',
+    noItemArsip: '1',
     kodeKlasifikasi: 'HK.05',
     uraianInformasiArsip: 'Peraturan Menteri No. 12 Tahun 2026',
     jenisArsip: 'ELEKTRONIK',
@@ -230,7 +230,7 @@ export const DUMMY_ARSIP: Arsip[] = [
   },
   {
     id: 'ARS-004',
-    noItemArsip: 'ARS/2026/TU.00/004',
+    noItemArsip: '2',
     kodeKlasifikasi: 'TU.00',
     uraianInformasiArsip: 'Surat Masuk dan Keluar Bulan Januari-Maret 2026',
     jenisArsip: 'KONVENSIONAL',
@@ -254,7 +254,7 @@ export const DUMMY_ARSIP: Arsip[] = [
   },
   {
     id: 'ARS-005',
-    noItemArsip: 'ARS/2026/KU.01/005',
+    noItemArsip: '1',
     kodeKlasifikasi: 'KU.01',
     uraianInformasiArsip: 'Laporan Keuangan Triwulan I Tahun 2026',
     jenisArsip: 'ELEKTRONIK',
@@ -278,7 +278,7 @@ export const DUMMY_ARSIP: Arsip[] = [
   },
   {
     id: 'ARS-006',
-    noItemArsip: 'ARS/2026/PR.03/006',
+    noItemArsip: '3',
     kodeKlasifikasi: 'PR.03',
     uraianInformasiArsip: 'Dokumen Pengadaan Peralatan Kantor Tahun 2026',
     jenisArsip: 'KONVENSIONAL',
@@ -302,7 +302,7 @@ export const DUMMY_ARSIP: Arsip[] = [
   },
   {
     id: 'ARS-007',
-    noItemArsip: 'ARS/2026/KP.04/007',
+    noItemArsip: '4',
     kodeKlasifikasi: 'KP.04',
     uraianInformasiArsip: 'SK Kenaikan Pangkat Pegawai Periode April 2026',
     jenisArsip: 'KONVENSIONAL',
@@ -326,7 +326,7 @@ export const DUMMY_ARSIP: Arsip[] = [
   },
   {
     id: 'ARS-008',
-    noItemArsip: 'ARS/2026/LP.01/008',
+    noItemArsip: '1',
     kodeKlasifikasi: 'LP.01',
     uraianInformasiArsip: 'Laporan Kinerja Semester I Tahun 2026',
     jenisArsip: 'ELEKTRONIK',
@@ -350,7 +350,7 @@ export const DUMMY_ARSIP: Arsip[] = [
   },
   {
     id: 'ARS-009',
-    noItemArsip: 'ARS/2026/DT.12/009',
+    noItemArsip: '2',
     kodeKlasifikasi: 'DT.12',
     uraianInformasiArsip: 'Surat Edaran tentang Libur Nasional',
     jenisArsip: 'KONVENSIONAL',
@@ -374,7 +374,7 @@ export const DUMMY_ARSIP: Arsip[] = [
   },
   {
     id: 'ARS-010',
-    noItemArsip: 'ARS/2026/HK.05/010',
+    noItemArsip: '2',
     kodeKlasifikasi: 'HK.05',
     uraianInformasiArsip: 'Peraturan Pemerintah tentang Kearsipan',
     jenisArsip: 'ELEKTRONIK',
@@ -406,7 +406,7 @@ export const DUMMY_PEMINJAMAN: Peminjaman[] = [
     noTiket: 'PIN/2026/07/001',
     peminjam: 'Drs. Agus Wijaya',
     unitKerja: 'Biro Hukum',
-    noItemArsip: 'ARS/2026/HK.05/003',
+    noItemArsip: '1',
     uraianArsip: 'Peraturan Menteri No. 12 Tahun 2026',
     tanggalPinjam: '2026-07-10',
     tanggalRencanaKembali: '2026-07-24',
@@ -421,7 +421,7 @@ export const DUMMY_PEMINJAMAN: Peminjaman[] = [
     noTiket: 'PIN/2026/07/002',
     peminjam: 'Siti Nurhaliza, S.Sos',
     unitKerja: 'Biro Perencanaan',
-    noItemArsip: 'ARS/2026/KU.01/005',
+    noItemArsip: '1',
     uraianArsip: 'Laporan Keuangan Triwulan I Tahun 2026',
     tanggalPinjam: '2026-07-05',
     tanggalRencanaKembali: '2026-07-19',
@@ -436,7 +436,7 @@ export const DUMMY_PEMINJAMAN: Peminjaman[] = [
     noTiket: 'PIN/2026/06/003',
     peminjam: 'Dr. H. Mahmud, M.Si',
     unitKerja: 'Inspektorat',
-    noItemArsip: 'ARS/2026/KP.02/002',
+    noItemArsip: '1',
     uraianArsip: 'Nota Dinas tentang Rapat Koordinasi Bulanan',
     tanggalPinjam: '2026-06-20',
     tanggalRencanaKembali: '2026-07-05',

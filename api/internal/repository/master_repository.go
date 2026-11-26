@@ -83,7 +83,7 @@ func (r *masterRepositoryImpl) FindAllKodeKlasifikasi(ctx context.Context, req d
 	}
 	perPage := req.PerPage
 	if perPage < 1 {
-		perPage = 435 // default kembalikan seluruh 435 kode klasifikasi untuk dropdown/master
+		perPage = 500 // default kembalikan seluruh master kode klasifikasi untuk dropdown/master
 	}
 
 	offset := (page - 1) * perPage
@@ -329,10 +329,12 @@ func (r *masterRepositoryImpl) CountArsipPerUnitKerja(ctx context.Context) (map[
 		Total       int64
 	}
 	var rows []row
-	if err := r.db.WithContext(ctx).Model(&model.Arsip{}).
-		Where("unit_kerja_id IS NOT NULL").
-		Select("unit_kerja_id, COUNT(*) as total").
-		Group("unit_kerja_id").
+	if err := r.db.WithContext(ctx).
+		Table("unit_kerja u").
+		Select("u.id AS unit_kerja_id, COUNT(a.id) AS total").
+		Joins("LEFT JOIN arsip a ON a.deleted_at IS NULL AND (a.unit_kerja_id = u.id OR a.unor_id = u.kode OR a.pencipta_arsip = u.nama)").
+		Where("u.deleted_at IS NULL").
+		Group("u.id").
 		Scan(&rows).Error; err != nil {
 		return result, err
 	}

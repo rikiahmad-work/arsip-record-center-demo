@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"math"
+	"strconv"
 	"strings"
 
 	"github.com/kemenpppa/siarsip-api/internal/dto"
@@ -46,6 +48,7 @@ type ArsipRepository interface {
 	CountByStatus(ctx context.Context) (draft, final int64, err error)
 	CountTotal(ctx context.Context) (int64, error)
 	CountByUnor(ctx context.Context, unorID string) (int64, error)
+	NextNoItemByUnor(ctx context.Context, unorID string, unitKerjaID *uint, penciptaArsip string) (string, error)
 }
 
 type arsipRepositoryImpl struct {
@@ -152,6 +155,8 @@ func (r *arsipRepositoryImpl) FindAll(ctx context.Context, req dto.ArsipListRequ
 		Preload("PetugasInput").
 		Preload("LokasiSimpanRef").
 		Preload("UnitKerjaRef").
+		Preload("PeminjamanList").
+		Preload("PenyusutanList").
 		Order(sortCol + " " + sortOrder).
 		Offset(offset).
 		Limit(perPage).
@@ -184,6 +189,8 @@ func (r *arsipRepositoryImpl) FindByID(ctx context.Context, id uint) (*model.Ars
 		Preload("LokasiSimpanRef").
 		Preload("UnitKerjaRef").
 		Preload("DokumenList").
+		Preload("PeminjamanList").
+		Preload("PenyusutanList").
 		First(&arsip, id).Error
 	if err != nil {
 		return nil, err
@@ -297,4 +304,59 @@ func (r *arsipRepositoryImpl) CountByUnor(ctx context.Context, unorID string) (i
 		Where("unor_id = ?", unorID).
 		Count(&count).Error
 	return count, err
+}
+
+// NextNoItemByUnor menghasilkan nomor urut item arsip biasa ("1", "2", "3", ...)
+// yang mengurut per Unit Kerja / Pencipta Arsip.
+func (r *arsipRepositoryImpl) NextNoItemByUnor(ctx context.Context, unorID string, unitKerjaID *uint, penciptaArsip string) (string, error) {
+	query := r.db.WithContext(ctx).Model(&model.Arsip{})
+	switch {
+	case unitKerjaID != nil && *unitKerjaID > 0 && penciptaArsip != "":
+		query = query.Where("unor_id = ? OR unit_kerja_id = ? OR pencipta_arsip = ?", unorID, *unitKerjaID, penciptaArsip)
+	case unitKerjaID != nil && *unitKerjaID > 0:
+		query = query.Where("unor_id = ? OR unit_kerja_id = ?", unorID, *unitKerjaID)
+	case penciptaArsip != "":
+		query = query.Where("unor_id = ? OR pencipta_arsip = ?", unorID, penciptaArsip)
+	default:
+		query = query.Where("unor_id = ?", unorID)
+	}
+
+	var activeNoItems []string
+	if err := query.Pluck("no_item_arsip", &activeNoItems).Error; err != nil {
+		return "", err
+	}
+
+	usedActive := make(map[string]bool, len(activeNoItems))
+	maxNum := 0
+	for _, raw := range activeNoItems {
+		trimmed := strings.TrimSpace(raw)
+		usedActive[trimmed] = true
+		if n, err := strconv.Atoi(trimmed); err == nil && n > maxNum {
+			maxNum = n
+		}
+	}
+
+	nextNum := maxNum + 1
+	if len(activeNoItems)+1 > nextNum {
+		nextNum = len(activeNoItems) + 1
+	}
+	for usedActive[strconv.Itoa(nextNum)] {
+		nextNum++
+	}
+	nextStr := strconv.Itoa(nextNum)
+
+	// Pastikan tidak ada baris soft-deleted yang menahan UNIQUE KEY (unor_id, no_item_arsip)
+	var softDeleted []model.Arsip
+	if err := r.db.WithContext(ctx).Unscoped().
+		Where("unor_id = ? AND no_item_arsip = ? AND deleted_at IS NOT NULL", unorID, nextStr).
+		Find(&softDeleted).Error; err == nil {
+		for _, delRow := range softDeleted {
+			_ = r.db.WithContext(ctx).Unscoped().
+				Model(&model.Arsip{}).
+				Where("id = ?", delRow.ID).
+				Update("no_item_arsip", fmt.Sprintf("%s_del_%d", nextStr, delRow.ID)).Error
+		}
+	}
+
+	return nextStr, nil
 }

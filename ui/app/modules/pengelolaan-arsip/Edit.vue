@@ -33,6 +33,7 @@
         <ModulesPengelolaanArsipFormFormIdentitasArsip
           :form="formA"
           :kode-options="kodeOptions"
+          :is-edit="true"
           @update:noItemArsip="formA.noItemArsip = $event"
           @update:kodeKlasifikasi="formA.kodeKlasifikasi = $event"
           @update:jenisArsip="formA.jenisArsip = $event"
@@ -133,7 +134,7 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const { isAdmin } = useSession()
-const { getArsipById, updateArsip, uploadDokumenArsip, getKodeKlasifikasi, getLokasiSimpan, getUnitKerja } = useArsip()
+const { getArsipById, updateArsip, uploadDokumenArsip, getKodeKlasifikasi, getLokasiSimpan, getUnitKerja, getNextNoItemArsip } = useArsip()
 const { showToast } = useToast()
 
 const id = route.params.id as string
@@ -141,6 +142,8 @@ const arsip = ref<Arsip | null>(null)
 const loading = ref(true)
 const simpanLoading = ref(false)
 const initialLoadDone = ref(false)
+const originalUnorId = ref('')
+const originalNoItemArsip = ref('')
 
 useHead({
   title: computed(() => `Edit Arsip — ${arsip.value?.noItemArsip || ''} | Arsip Record Center KemenPPPA`),
@@ -240,6 +243,8 @@ onMounted(async () => {
       formE.unorId = matchedUnit ? matchedUnit.id : (units[0]?.id || '')
       formE.penciptaArsip = data.penciptaArsip
       formE.petugasInput = data.petugasInput || 'Petugas Arsip'
+      originalUnorId.value = formE.unorId
+      originalNoItemArsip.value = data.noItemArsip
     }
   } finally {
     loading.value = false
@@ -264,9 +269,19 @@ watch(
 
 watch(
   () => formE.unorId,
-  (val) => {
+  async (val) => {
     const found = masterUnits.value.find((u) => u.id === val)
     if (found) formE.penciptaArsip = found.namaUnit
+    if (!initialLoadDone.value) return
+    if (val === originalUnorId.value) {
+      formA.noItemArsip = originalNoItemArsip.value
+    } else if (found) {
+      formA.noItemArsip = String((found.totalArsip || 0) + 1)
+      const nextNo = await getNextNoItemArsip(found.id, found.namaUnit)
+      if (formE.unorId === val) {
+        formA.noItemArsip = nextNo
+      }
+    }
   }
 )
 

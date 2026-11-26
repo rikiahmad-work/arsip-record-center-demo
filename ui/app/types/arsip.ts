@@ -49,6 +49,13 @@ export interface Arsip {
   petugasInputId?: number
   petugasInput: string
   status: 'draft' | 'final'
+  tanggalJatuhTempo?: string
+  isJatuhTempo?: boolean
+  rekomendasiRetensi?: string
+  sedangDipinjam?: boolean
+  statusPinjam?: string
+  dalamPenyusutan?: boolean
+  statusPenyusutan?: string
   createdAt: string
   updatedAt: string
 }

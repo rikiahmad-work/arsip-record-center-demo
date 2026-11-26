@@ -145,7 +145,7 @@ const unitOptions = computed(() =>
 )
 
 const formA = reactive({
-  noItemArsip: '',
+  noItemArsip: '1',
   kodeKlasifikasi: '',
   jenisArsip: 'Konvensional',
   tingkatPerkembangan: 'Asli',
@@ -154,16 +154,16 @@ const formA = reactive({
 
 const formB = reactive({
   kurunWaktu: String(new Date().getFullYear()),
-  jumlah: '1 Berkas',
-  keterangan: 'Baik',
+  jumlah: '1 Lembar',
+  keterangan: 'KONDISI BAIK',
   nomorDefinitif: '',
 })
 
 const formC = reactive({
   lokasiSimpan: 'Record Center',
-  noBoks: 'B-001',
-  noRak: 'R-01',
-  noFolder: 'F-01',
+  noBoks: '',
+  noRak: '',
+  noFolder: '',
 })
 
 const formD = reactive({
@@ -193,7 +193,7 @@ onMounted(async () => {
   const [kodes, lokasis, units] = await Promise.all([
     getKodeKlasifikasi(),
     getLokasiSimpan(),
-    getUnitKerja(),
+    getUnitKerja(true),
   ])
   masterKodes.value = kodes
   masterLokasis.value = lokasis
@@ -234,7 +234,7 @@ function buildPayload(status: string) {
   const selectedUnit = masterUnits.value.find((u) => u.id === formE.unorId)
 
   return {
-    no_item_arsip: formA.noItemArsip || undefined,
+    no_item_arsip: undefined,
     no_folder: formC.noFolder || null,
     kode_klasifikasi: formA.kodeKlasifikasi,
     uraian_informasi: formA.uraianInformasiArsip,

@@ -37,15 +37,32 @@
             <span class="badge bg-light-primary text-primary fw-bold">{{ item.kodeKlasifikasi }}</span>
           </td>
 
-          <!-- 4. Uraian Informasi Arsip -->
-          <td style="min-width: 260px; max-width: 340px; white-space: normal;">
+          <!-- 4. Uraian Informasi Arsip + Pembeda Status Pinjam & Penyusutan -->
+          <td style="min-width: 260px; max-width: 360px; white-space: normal;">
             <div class="fw-medium text-dark">
               {{ item.uraianInformasi || item.uraianInformasiArsip }}
             </div>
             <small class="text-muted d-block mt-1">
               {{ item.jenisArsip }} &bull; {{ item.tingkatPerkembangan }} &bull; {{ item.jumlah }}
+              <template v-if="item.keterangan"> &bull; {{ item.keterangan }}</template>
             </small>
-            <span v-if="item.status === 'draft'" class="badge bg-warning text-dark mt-1">Draft</span>
+            <div class="d-flex flex-wrap gap-1 mt-1">
+              <span v-if="item.status === 'draft'" class="badge bg-warning text-dark">
+                <i class="ti ti-file-pencil me-1"></i>Draft
+              </span>
+              <span
+                v-if="item.sedangDipinjam"
+                :class="['badge', String(item.statusPinjam).toLowerCase() === 'terlambat' ? 'bg-danger' : 'bg-warning text-dark']"
+              >
+                <i class="ti ti-book-upload me-1"></i>{{ String(item.statusPinjam).toLowerCase() === 'terlambat' ? 'Dipinjam (Terlambat)' : 'Sedang Dipinjam' }}
+              </span>
+              <span
+                v-if="item.dalamPenyusutan"
+                class="badge bg-dark text-white"
+              >
+                <i class="ti ti-recycle me-1"></i>{{ item.statusPenyusutan || 'Proses Penyusutan' }}
+              </span>
+            </div>
           </td>
 
           <!-- 5. Kurun Waktu -->
@@ -59,12 +76,30 @@
             </small>
           </td>
 
-          <!-- 7. Retensi & Nasib Akhir -->
+          <!-- 7. Retensi & Nasib Akhir (Standar ANRI Cut-off 31 Desember) -->
           <td class="text-nowrap">
-            <div class="small text-muted mb-1">{{ item.jangkaSimpanInaktif || '-' }}</div>
-            <span :class="['badge', isPermanen(item.nasibAkhir || item.jangkaSimpanNasibAkhir) ? 'bg-primary' : 'bg-secondary']">
-              {{ item.nasibAkhir || item.jangkaSimpanNasibAkhir || 'Musnah' }}
-            </span>
+            <div class="d-flex align-items-center gap-1 mb-1">
+              <span class="small text-dark fw-medium">{{ item.jangkaSimpanInaktif || '-' }}</span>
+              <span :class="['badge', isPermanen(item.nasibAkhir || item.jangkaSimpanNasibAkhir) ? 'bg-primary' : 'bg-secondary']">
+                {{ item.nasibAkhir || item.jangkaSimpanNasibAkhir || 'Musnah' }}
+              </span>
+            </div>
+            <div v-if="item.isJatuhTempo" class="mt-1">
+              <span
+                :class="[
+                  'badge',
+                  isPermanen(item.nasibAkhir || item.jangkaSimpanNasibAkhir)
+                    ? 'bg-light-info text-info border border-info'
+                    : 'bg-light-danger text-danger border border-danger'
+                ]"
+                :title="`Cut-off Retensi ANRI: ${item.tanggalJatuhTempo || ''}`"
+              >
+                <i class="ti ti-alert-triangle me-1"></i>{{ item.rekomendasiRetensi || 'Jatuh Tempo Retensi' }}
+              </span>
+            </div>
+            <small v-else-if="item.tanggalJatuhTempo" class="text-muted d-block" style="font-size: 11px;">
+              Batas: {{ item.tanggalJatuhTempo }}
+            </small>
           </td>
 
           <!-- 8. SKKAD & Kategori -->

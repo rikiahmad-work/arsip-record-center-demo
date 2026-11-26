@@ -15,7 +15,7 @@
             :model-value="form.petugasInput"
             label="Petugas Input"
             placeholder="Otomatis terisi"
-            readonly
+            disabled
           />
         </div>
   </div>
